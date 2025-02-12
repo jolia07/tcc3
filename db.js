@@ -1,6 +1,6 @@
-const { Client } = require('pg');
+const { Pool } = require('pg');
 
-const client = new Client({
+const pool = new Pool({
   user: 'postgres',
   host: 'localhost',
   database: 'tcc',
@@ -8,9 +8,8 @@ const client = new Client({
   port: 5432,
 });
 
-client.connect()
+pool.connect()
   .then(() => console.log('Conectado ao PostgreSQL!'))
-  .catch(err => console.error('Erro na conexão', err))
-  .finally(() => client.end());
+  .catch(err => console.error('Erro na conexão', err));
 
-module.exports = client;
+module.exports = pool; // Exporta o pool, NÃO fecha a conexão!

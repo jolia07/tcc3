@@ -1,19 +1,18 @@
 const express = require('express');
 const bodyParser = require('body-parser');
-const connection = require('./db');
 const path = require('path');
 const multer = require('multer');
 const session = require('express-session');
-const fs = require('fs');
+const bcrypt = require('bcrypt');
+const pool = require('./db');
 
 const app = express();
 
 app.use(express.json());
-app.use(bodyParser.json({limit: '50mb'}));
-app.use(bodyParser.urlencoded({limit: '50mb', extended: true}));
+app.use(bodyParser.json({ limit: '50mb' }));
+app.use(bodyParser.urlencoded({ limit: '50mb', extended: true }));
 app.use(express.static('public'));
 app.use('/img', express.static(path.join(__dirname, 'img')));
-
 
 // Configuração da sessão
 app.use(session({
@@ -28,7 +27,7 @@ app.use(session({
 
 const storage = multer.diskStorage({
     destination: (req, file, cb) => {
-        cb(null, path.join(__dirname, 'public', 'img')); 
+        cb(null, path.join(__dirname, 'public', 'img'));
     },
     filename: (req, file, cb) => {
         const userId = req.session.user.id;
@@ -39,10 +38,8 @@ const storage = multer.diskStorage({
 
 const upload = multer({
     storage: storage,
-    limits: {
-        fileSize: 5 * 1024 * 1024 // 5MB
-    },
-    fileFilter: function (req, file, cb) {
+    limits: { fileSize: 5 * 1024 * 1024 },
+    fileFilter: (req, file, cb) => {
         const filetypes = /jpeg|jpg|png|gif/;
         const mimetype = filetypes.test(file.mimetype);
         const extname = filetypes.test(path.extname(file.originalname).toLowerCase());
@@ -54,110 +51,119 @@ const upload = multer({
     }
 });
 
-// middleware para verificar autenticação em rotas protegidas
+// Middleware de autenticação
 function verificarAutenticacao(req, res, next) {
     if (req.session.user) {
-        next(); // usuário autenticado, segue para a rota
+        next();
     } else {
-        res.redirect('/'); // redireciona para a página inicial se não estiver autenticado
+        res.redirect('/');
     }
 }
 
-// rota inicial
+// Rota inicial
 app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'public/home.html'));
 });
 
-// rota de login
-app.post('/login', (req, res) => {
+// Rota de login
+app.post('/login', async (req, res) => {
     const { email, senha } = req.body;
 
-    const query = 'SELECT * FROM usuario WHERE email = ? AND senha = ?';
-    connection.query(query, [email, senha], (err, results) => {
-        if (err) throw err;
+    try {
+        const result = await pool.query('SELECT * FROM usuario WHERE email = $1', [email]);
 
-        if (results.length > 0) {
-            req.session.user = { 
-                id: 
-                 results[0].id,nome:
-                 results[0].nome, senha: 
-                 results[0].senha, email:
-                 results[0].email };
-            console.log('Usuário logado:', req.session.user);
-            return res.redirect('/pagInicial');
-        } else {
-            res.status(401).send('E-mail ou senha incorretos!');
+        if (result.rows.length === 0) {
+            return res.status(401).send('E-mail ou senha incorretos!');
         }
-    });
+
+        const usuario = result.rows[0];
+        const senhaCorreta = await bcrypt.compare(senha, usuario.senha);
+
+        if (!senhaCorreta) {
+            return res.status(401).send('E-mail ou senha incorretos!');
+        }
+
+        req.session.user = {
+            id: usuario.id,
+            nome: usuario.nome,
+            email: usuario.email
+        };
+
+        console.log('Usuário logado:', req.session.user);
+        res.redirect('pagInicial');
+
+    } catch (err) {
+        console.error('Erro ao fazer login:', err);
+        res.status(500).send('Erro no servidor.');
+    }
 });
 
-// rota de cadastro
-app.post('/cadastro', (req, res) => {
+// Rota de cadastro
+app.post('/cadastro', async (req, res) => {
     const { nome, email, senha, profilePic } = req.body;
 
-    const checkUserQuery = 'SELECT * FROM usuario WHERE email = ?';
-    connection.query(checkUserQuery, [email], (err, results) => {
-        if (err) throw err;
-
-        if (results.length > 0) {
+    try {
+        const checkUser = await pool.query('SELECT * FROM usuario WHERE email = $1', [email]);
+        if (checkUser.rows.length > 0) {
             return res.status(409).send('Usuário já existe');
         }
 
-        const insertUserQuery = 'INSERT INTO usuario (nome, email, senha, profilePic) VALUES (?, ?, ?, ?)';
-        connection.query(insertUserQuery, [nome, email, senha, profilePic], (err, results) => {
-            if (err) throw err;
+        const senhaCriptografada = await bcrypt.hash(senha, 10);
+        const result = await pool.query(
+            'INSERT INTO usuario (nome, email, senha, profilePic) VALUES ($1, $2, $3, $4) RETURNING id',
+            [nome, email, senhaCriptografada, profilePic]
+        );
 
-            req.session.user = { id: results.insertId, email };
-            console.log('Usuário registrado:', req.session.user);
-            res.redirect('/pagInicial');
-        });
-    });
+        req.session.user = { id: result.rows[0].id, email };
+        console.log('Usuário registrado:', req.session.user);
+        res.redirect('pagInicial');
+
+    } catch (err) {
+        console.error('Erro ao cadastrar usuário:', err);
+        res.status(500).send('Erro no servidor.');
+    }
 });
 
-// Rota para atualizar a senha do usuário
-app.post('/atualizarSenha', (req, res) => {
+// Rota para atualizar senha
+app.post('/atualizarSenha', async (req, res) => {
     const { email, newPassword } = req.body;
 
-    // Usando Promises em vez de await
-    connection.query('SELECT * FROM usuario WHERE email = ?', [email], (error, results) => {
-        if (error) {
-            console.error(error);
-            return res.json({ success: false, message: 'Erro ao verificar o usuário.' });
+    try {
+        const result = await pool.query('SELECT * FROM usuario WHERE email = $1', [email]);
+        if (result.rows.length === 0) {
+            return res.json({ success: false, message: 'Usuário não encontrado.' });
         }
 
-        if (results.length > 0) {
-            // Atualizar a senha no banco de dados
-            connection.query('UPDATE usuario SET senha = ? WHERE email = ?', [newPassword, email], (error, results) => {
-                if (error) {
-                    console.error(error);
-                    return res.json({ success: false, message: 'Erro ao atualizar a senha.' });
-                }
+        const senhaCriptografada = await bcrypt.hash(newPassword, 10);
+        await pool.query('UPDATE usuario SET senha = $1 WHERE email = $2', [senhaCriptografada, email]);
 
-                res.json({ success: true });
-            });
-        } else {
-            res.json({ success: false, message: 'Usuário não encontrado.' });
-        }
-    });
+        res.json({ success: true, message: 'Senha atualizada com sucesso!' });
+
+    } catch (err) {
+        console.error('Erro ao atualizar senha:', err);
+        res.status(500).send('Erro no servidor.');
+    }
 });
 
-//rota para atulizar o perfil do usuário
-app.post('/atualizarPerfil', verificarAutenticacao, (req, res) => {
+// Rota para atualizar perfil
+app.post('/atualizarPerfil', verificarAutenticacao, async (req, res) => {
     const { nome, email, senha } = req.body;
     const userId = req.session.user.id;
 
-    // atualiza os dados no banco de dados
-    const query = 'UPDATE usuario SET nome = ?, email = ?, senha = ? WHERE id = ?';
-    connection.query(query, [nome, email, senha, userId], (err) => {
-        if (err) {
-            console.error('Erro ao atualizar perfil:', err);
-            return res.status(500).json({ message: 'Erro ao atualizar perfil' });
-        }
+    try {
+        const senhaCriptografada = await bcrypt.hash(senha, 10);
+        await pool.query('UPDATE usuario SET nome = $1, email = $2, senha = $3 WHERE id = $4', 
+            [nome, email, senhaCriptografada, userId]);
+
         res.json({ message: 'Perfil atualizado com sucesso!' });
-    });
+
+    } catch (err) {
+        console.error('Erro ao atualizar perfil:', err);
+        res.status(500).send('Erro no servidor.');
+    }
 });
 
-//atualizar imagem
+// Rota para upload de imagem de perfil
 app.post('/upload-profile-image', verificarAutenticacao, upload.single('profilePic'), async (req, res) => {
     if (!req.file) {
         return res.status(400).json({ message: 'Nenhum arquivo foi enviado' });
@@ -167,71 +173,45 @@ app.post('/upload-profile-image', verificarAutenticacao, upload.single('profileP
         const userId = req.session.user.id;
         const imagePath = req.file.filename;
 
-        const query = 'UPDATE usuario SET profilePic = ? WHERE id = ?';
-        connection.query(query, [imagePath, userId], (err) => {
-            if (err) {
-                console.error('Erro ao atualizar foto de perfil no banco:', err);
-                return res.status(500).json({ message: 'Erro ao atualizar foto' });
-            }
-            res.json({
-                message: 'Imagem atualizada com sucesso!',
-                filename: imagePath
-            });
-        });
-    } catch (error) {
-        console.error('Erro no upload de imagem:', error);
-        res.status(500).json({ message: 'Erro no upload de imagem' });
+        await pool.query('UPDATE usuario SET profilePic = $1 WHERE id = $2', [imagePath, userId]);
+        res.json({ message: 'Imagem atualizada com sucesso!', filename: imagePath });
+
+    } catch (err) {
+        console.error('Erro ao atualizar foto de perfil:', err);
+        res.status(500).send('Erro no servidor.');
     }
 });
 
 app.use('/uploads', express.static('uploads'));
 
-//rota protegida - página inicial
+// Rota protegida - Página inicial
 app.get('/pagInicial', verificarAutenticacao, (req, res) => {
     res.sendFile(path.join(__dirname, 'public/pagInicial.html'));
 });
 
-//rota para bd
-app.get('/getUserData', verificarAutenticacao, (req, res) => {
-    const usuarioId = req.session.user.id;
-
-    const query = 'SELECT nome, email, senha, profilePic FROM usuario WHERE id = ?';
-    connection.query(query, [usuarioId], (err, results) => {
-        if (err) {
-            return res.status(500).json({ message: 'Erro ao buscar dados do usuário' });
-        }
-        res.json(results[0]);
-    });
-});
-
-//rota protegida para o usuario
-app.get('/user', verificarAutenticacao, (req, res) => {
+// Rota para buscar dados do usuário
+app.get('/getUserData', verificarAutenticacao, async (req, res) => {
     const userId = req.session.user.id;
-    
-    const query = 'SELECT nome, email, senha, profilePic FROM usuario WHERE id = ?';
-    connection.query(query, [userId], (err, results) => {
-        if (err) {
-            return res.status(500).json({ message: 'Erro ao buscar dados do usuário' });
-        }
-        if (results.length > 0) {
-            res.json(results[0]);
-        } else {
-            res.status(404).json({ message: 'Usuário não encontrado' });
-        }
-    });
+
+    try {
+        const result = await pool.query('SELECT nome, email, profilePic FROM usuario WHERE id = $1', [userId]);
+        res.json(result.rows[0]);
+
+    } catch (err) {
+        console.error('Erro ao buscar dados do usuário:', err);
+        res.status(500).send('Erro no servidor.');
+    }
 });
 
-// rota de logout
+// Rota de logout
 app.post('/logout', (req, res) => {
-    req.session.destroy((err) => {
-        if (err) {
-            return res.status(500).json({ message: 'Erro ao encerrar sessão.' });
-        }
-        res.status(200).json({ message: 'Logout realizado com sucesso!' });
+    req.session.destroy(err => {
+        if (err) return res.status(500).send('Erro ao encerrar sessão.');
+        res.status(200).send('Logout realizado com sucesso!');
     });
 });
 
-// inicializar o servidor
+// Inicializar servidor
 app.listen(5505, () => {
     console.log('Servidor rodando na porta 5505');
 });
