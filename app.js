@@ -90,7 +90,7 @@ app.post('/login', async (req, res) => {
         };
 
         console.log('Usuário logado:', req.session.user);
-        res.redirect('pagInicial');
+        res.redirect('calendario');
 
     } catch (err) {
         console.error('Erro ao fazer login:', err);
@@ -116,7 +116,7 @@ app.post('/cadastro', async (req, res) => {
 
         req.session.user = { id: result.rows[0].id, email };
         console.log('Usuário registrado:', req.session.user);
-        res.redirect('pagInicial');
+        res.redirect('calendario');
 
     } catch (err) {
         console.error('Erro ao cadastrar usuário:', err);
@@ -185,8 +185,8 @@ app.post('/upload-profile-image', verificarAutenticacao, upload.single('profileP
 app.use('/uploads', express.static('uploads'));
 
 // Rota protegida - Página inicial
-app.get('/pagInicial', verificarAutenticacao, (req, res) => {
-    res.sendFile(path.join(__dirname, 'public/pagInicial.html'));
+app.get('/calendario', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'calendario.html'));
 });
 
 // Rota para buscar dados do usuário
@@ -200,6 +200,34 @@ app.get('/getUserData', verificarAutenticacao, async (req, res) => {
     } catch (err) {
         console.error('Erro ao buscar dados do usuário:', err);
         res.status(500).send('Erro no servidor.');
+    }
+});
+
+// Rota para buscar aulas
+app.get('/aulas', async (req, res) => {
+    try {
+        const result = await pool.query("SELECT * FROM aulas");
+        res.json(result.rows);
+    } catch (err) {
+        console.error("Erro ao buscar aulas:", err);
+        res.status(500).send("Erro no servidor.");
+    }
+});
+
+// Rota para adicionar aulas
+app.post('/aulas', async (req, res) => {
+    const { turma, dias_semana, laboratorio, unidade_curricular, carga_horaria, turno, data_inicio, data_fim } = req.body;
+    
+    try {
+        await pool.query(`
+            INSERT INTO aulas (turma, dias_semana, laboratorio, unidade_curricular, carga_horaria, turno, data_inicio, data_fim) 
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`,
+            [turma, dias_semana, laboratorio, unidade_curricular, carga_horaria, turno, data_inicio, data_fim]
+        );
+        res.status(201).send("Aula adicionada com sucesso!");
+    } catch (err) {
+        console.error("Erro ao criar aula:", err);
+        res.status(500).send("Erro no servidor.");
     }
 });
 
