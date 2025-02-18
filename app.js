@@ -203,33 +203,65 @@ app.get('/getUserData', verificarAutenticacao, async (req, res) => {
     }
 });
 
-// Rota para buscar aulas
-app.get('/aulas', async (req, res) => {
+// Rota para buscar todas as aulas
+app.get("/aulas", async (req, res) => {
     try {
-        const result = await pool.query("SELECT * FROM aulas");
-        res.json(result.rows);
+      const result = await pool.query("SELECT * FROM aulas");
+      res.json(result.rows);
     } catch (err) {
-        console.error("Erro ao buscar aulas:", err);
-        res.status(500).send("Erro no servidor.");
+      console.error("Erro ao buscar aulas:", err);
+      res.status(500).send("Erro no servidor.");
     }
-});
-
-// Rota para adicionar aulas
-app.post('/aulas', async (req, res) => {
+  });
+  
+  // Rota para adicionar uma aula
+  app.post("/aulas", async (req, res) => {
     const { turma, dias_semana, laboratorio, unidade_curricular, carga_horaria, turno, data_inicio, data_fim } = req.body;
     
     try {
-        await pool.query(`
-            INSERT INTO aulas (turma, dias_semana, laboratorio, unidade_curricular, carga_horaria, turno, data_inicio, data_fim) 
-            VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`,
-            [turma, dias_semana, laboratorio, unidade_curricular, carga_horaria, turno, data_inicio, data_fim]
-        );
-        res.status(201).send("Aula adicionada com sucesso!");
+      const result = await pool.query(
+        `INSERT INTO aulas (turma, dias_semana, laboratorio, unidade_curricular, carga_horaria, turno, data_inicio, data_fim) 
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING id`,
+        [turma, dias_semana, laboratorio, unidade_curricular, carga_horaria, turno, data_inicio, data_fim]
+      );
+      res.json({ id: result.rows[0].id });
     } catch (err) {
-        console.error("Erro ao criar aula:", err);
-        res.status(500).send("Erro no servidor.");
+      console.error("Erro ao adicionar aula:", err);
+      res.status(500).send("Erro no servidor.");
     }
-});
+  });
+  
+  // Rota para atualizar uma aula
+  app.put("/aulas/:id", async (req, res) => {
+    const { id } = req.params;
+    const { turma, dias_semana, laboratorio, unidade_curricular, carga_horaria, turno, data_inicio, data_fim } = req.body;
+  
+    try {
+      await pool.query(
+        `UPDATE aulas 
+         SET turma = $1, dias_semana = $2, laboratorio = $3, unidade_curricular = $4, carga_horaria = $5, turno = $6, data_inicio = $7, data_fim = $8 
+         WHERE id = $9`,
+        [turma, dias_semana, laboratorio, unidade_curricular, carga_horaria, turno, data_inicio, data_fim, id]
+      );
+      res.send("Aula atualizada com sucesso!");
+    } catch (err) {
+      console.error("Erro ao atualizar aula:", err);
+      res.status(500).send("Erro no servidor.");
+    }
+  });
+  
+  // Rota para excluir uma aula
+  app.delete("/aulas/:id", async (req, res) => {
+    const { id } = req.params;
+  
+    try {
+      await pool.query("DELETE FROM aulas WHERE id = $1", [id]);
+      res.send("Aula excluída com sucesso!");
+    } catch (err) {
+      console.error("Erro ao excluir aula:", err);
+      res.status(500).send("Erro no servidor.");
+    }
+  });  
 
 // Rota de logout
 app.post('/logout', (req, res) => {
