@@ -17,11 +17,9 @@ const pool = mysql.createPool({
 
 pool.query(`
   CREATE TABLE IF NOT EXISTS materia (
-    id INT AUTO_INCREMENT PRIMARY KEY,
+    id INT AUTO_INCREMENT PRIMARY KEY not null,
     uc varchar(255) not null,
-    ch int not null,
-    user_id int,
-    foreign key (user_id) references usuario(id) on delete cascade
+    ch int not null
   );
 `).then(() => {
   console.log("Tabela 'materia' pronta!");
@@ -31,7 +29,7 @@ pool.query(`
 
 pool.query(`
   CREATE TABLE IF NOT EXISTS usuario (
-      id INT AUTO_INCREMENT PRIMARY KEY,
+      id INT AUTO_INCREMENT PRIMARY KEY not null,
       nome VARCHAR(255) NOT NULL,
       email VARCHAR(255) UNIQUE NOT NULL,
       senha VARCHAR(255) NOT NULL,
@@ -45,7 +43,8 @@ pool.query(`
 
 pool.query(`
   CREATE TABLE IF NOT EXISTS aula (
-      id INT AUTO_INCREMENT PRIMARY KEY,
+      id INT AUTO_INCREMENT PRIMARY KEY not null,
+      turno varchar(255) not null,
       laboratorio VARCHAR(255) NOT NULL,
       turma VARCHAR(255) UNIQUE NOT NULL,
       diasSemana varchar(255) NOT NULL,
