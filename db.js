@@ -1,59 +1,68 @@
-const { Pool } = require('pg');
+const mysql = require('mysql2/promise'); // Importa o mysql2
 
-const pool = new Pool({
-  user: 'postgres',
-  host: 'crucially-blessed-ibex.data-1.use1.tembo.io',
-  database: 'tcc2',
-  password: 'H8NyxvOG6gD0xbBj',
-  port: 5432,
+// Configuração da conexão com o MySQL
+const pool = mysql.createPool({
+  host: 'metro.proxy.rlwy.net',
+  user: 'root', // Substitua pelo usuário do MySQL
+  database: 'railway',
+  password: 'rgqWvFdLQYylJOeBffxARDNTEZvrlIPu', // Substitua pela senha do MySQL
+  port: 22537 , // Porta padrão do MySQL
   ssl: {
-    rejectUnauthorized: false,      // Necessário para conexões seguras no Tembo
+    rejectUnauthorized: false, // Necessário para conexões seguras no xxx
   },
+  waitForConnections: true,
+  connectionLimit: 10,
+  queueLimit: 0
 });
 
-// Criar tabela se não existir
-const createTable = async () => {
-  try {
-    await pool.query(`
-      CREATE TABLE IF NOT EXISTS aulas (
-        id SERIAL PRIMARY KEY,
-        turma TEXT NOT NULL,
-        dias_semana TEXT NOT NULL,
-        laboratorio TEXT NOT NULL,
-        unidade_curricular TEXT NOT NULL,
-        carga_horaria INTEGER NOT NULL,
-        turno TEXT NOT NULL,
-        data_inicio DATE NOT NULL,
-        data_fim DATE NOT NULL
-      );
-    `);
-    console.log("Tabela 'aulas' pronta!");
-  } catch (err) {
-    console.error("Erro ao criar a tabela:", err);
-  }
-};
+pool.query(`
+  CREATE TABLE IF NOT EXISTS materia (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    uc varchar(255) not null,
+    ch int not null,
+    user_id int,
+    foreign key (user_id) references usuario(id) on delete cascade
+  );
+`).then(() => {
+  console.log("Tabela 'materia' pronta!");
+}).catch(err => {
+  console.error("Erro ao criar a tabela 'materia':", err);
+});
 
 pool.query(`
   CREATE TABLE IF NOT EXISTS usuario (
-      id SERIAL PRIMARY KEY,
-      nome TEXT NOT NULL,
-      email TEXT UNIQUE NOT NULL,
-      senha TEXT NOT NULL,
-      profilePic TEXT
+      id INT AUTO_INCREMENT PRIMARY KEY,
+      nome VARCHAR(255) NOT NULL,
+      email VARCHAR(255) UNIQUE NOT NULL,
+      senha VARCHAR(255) NOT NULL,
+      profilePic VARCHAR(255)
   );
-`, (err) => {
-  if (err) {
-      console.error("Erro ao criar a tabela 'usuario':", err);
-  } else {
-      console.log("Tabela 'usuario' pronta!");
-  }
+`).then(() => {
+  console.log("Tabela 'usuario' pronta!");
+}).catch(err => {
+  console.error("Erro ao criar a tabela 'usuario':", err);
+});
+
+pool.query(`
+  CREATE TABLE IF NOT EXISTS aula (
+      id INT AUTO_INCREMENT PRIMARY KEY,
+      laboratorio VARCHAR(255) NOT NULL,
+      turma VARCHAR(255) UNIQUE NOT NULL,
+      diasSemana varchar(255) NOT NULL,
+      horario time,
+      materia_id int,
+      foreign key (materia_id) references materia(id) on delete cascade
+  );
+`).then(() => {
+  console.log("Tabela 'aula' pronta!");
+}).catch(err => {
+  console.error("Erro ao criar a tabela 'aula':", err);
 });
 
 // Conectar ao banco e criar a tabela
-pool.connect()
+pool.getConnection()
   .then(() => {
-    console.log("Conectado ao PostgreSQL no Tembo!");
-    createTable();
+    console.log("Conectado ao MySQL no Railway!");
   })
   .catch(err => console.error("Erro na conexão", err));
 

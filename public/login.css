@@ -1,4 +1,3 @@
-
 .navigation .btnLogin-popup {
     width: 130px;
     height: 50px;
@@ -10,7 +9,7 @@
     font-size: 1.1em;
     color: white;
     font-weight: 500;
-    margin-left: 40px;
+    margin-left: 1350px;
     transition: .5s;
 }
 
@@ -20,7 +19,7 @@
 }
 
 .wrapper {
-    position: relative;
+    position: fixed;
     width: 400px;
     height: auto;
     max-height: 600px; 
@@ -46,8 +45,6 @@
     height: 100%;
     background: rgba(0, 0, 0, 0.7);
     z-index: 999;
-    justify-content: center;
-    align-items: center
 }
 
 .show {
@@ -55,7 +52,7 @@
 }
 
 .show .overlay {
-    display: flex;
+    display: block;
 }
 
 .form-box {
