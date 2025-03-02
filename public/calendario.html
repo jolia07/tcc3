@@ -10,98 +10,80 @@
 </head>
 <body>
 
-    <div class="controls">
-        <button onclick="loadCalendar()">Carregar Aulas</button>
-    </div>
     <div id="scheduler"></div>
 
     <script>
-         document.addEventListener("DOMContentLoaded", function () {
+        document.addEventListener("DOMContentLoaded", async function () {
             scheduler.config.xml_date = "%Y-%m-%d %H:%i";
             scheduler.init("scheduler", new Date(), "month");
-            
-            scheduler.config.lightbox.sections = [
-                { name: "Turma", height: 30, map_to: "text", type: "textarea" },
-                { name: "Laboratório", height: 30, map_to: "laboratorio", type: "textarea" },
-                { name: "Unidade Curricular", map_to: "materia_id", type: "select", options: [] },
-                { name: "Carga Horária", map_to: "ch", type: "textarea", readonly: true },
-                { name: "Dias da Semana", map_to: "diasSemana", type: "textarea" },
-                { name: "Horário", map_to: "horario", type: "time" }
-            ];
 
-            loadUCs(); // Carregar UCs na inicialização
-        });
+            // 🔹 Buscar matérias e armazenar em uma variável global
+            let materias = [];
+            await fetch("http://localhost:5505/materias")
+                .then(response => response.json())
+                .then(data => materias = data);
 
-        function loadCalendar() {
+            // 🔹 Buscar aulas já registradas e exibir no calendário
             fetch("http://localhost:5505/aulas")
                 .then(response => response.json())
                 .then(data => {
                     const events = data.map(aula => ({
                         id: aula.id,
-                        text: `${aula.turma} - ${aula.laboratorio}`,
-                        laboratorio: aula.laboratorio,
+                        text: `${aula.uc} - ${aula.turma}`,
+                        start_date: aula.horario,
+                        end_date: aula.horario,
                         turma: aula.turma,
-                        materia_id: aula.materia_id,
+                        turno: aula.turno,
+                        laboratorio: aula.laboratorio,
                         diasSemana: aula.diasSemana,
-                        horario: aula.horario,
-                        start_date: `2024-01-01 ${aula.horario}`,
-                        end_date: `2024-01-01 ${aula.horario}`
+                        materia_id: aula.materia_id
                     }));
-                    scheduler.clearAll();
                     scheduler.parse(events, "json");
                 });
-        }
 
-        scheduler.attachEvent("onEventAdded", function (id, ev) {
-            const user_id = sessionStorage.getItem("user_id"); // Pegando usuário logado
-            if (!user_id) {
-                alert("Usuário não autenticado!");
-                return;
-            }
+            // 🔹 Criar formulário de edição com todas as informações
+            scheduler.config.lightbox.sections = [
+                { name: "Matéria", height: 30, map_to: "materia_id", type: "select", options: materias.map(m => ({ key: m.id, label: m.uc })) },
+                { name: "Turma", height: 30, map_to: "turma", type: "textarea" },
+                { name: "Turno", height: 30, map_to: "turno", type: "select", options: [
+                    { key: "Matutino", label: "Matutino" },
+                    { key: "Vespertino", label: "Vespertino" },
+                    { key: "Noturno", label: "Noturno" }
+                ]},
+                { name: "Laboratório", height: 30, map_to: "laboratorio", type: "textarea" },
+                { name: "Dias da Semana", height: 30, map_to: "diasSemana", type: "textarea" },
+                { name: "Horário", height: 30, map_to: "start_date", type: "time" },
+                { name: "End", height: 30, map_to: "end_date", type: "time" },
+                { name: "description", height: 200, map_to: "text", type: "textarea" },
+                { name: "time", height: 72, type: "time", map_to: "auto" }
+            ];
 
-            const aula = {
-                laboratorio: ev.laboratorio || "Lab Padrão",
-                turma: ev.text || "Turma Padrão",
-                diasSemana: ev.diasSemana || "Segunda a Sexta",
-                horario: ev.start_date.split(" ")[1], 
-                materia_id: ev.materia_id || 1,
-                user_id: user_id
-            };
+            // 🔹 Salvar aula no banco de dados ao adicionar um evento
+            scheduler.attachEvent("onEventAdded", function (id, ev) {
+                fetch("http://localhost:5505/aulas", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify(ev)
+                })
+                .then(response => response.json())
+                .then(data => scheduler.changeEventId(id, data.id));
+            });
 
-            fetch("http://localhost:5505/aulas", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(aula)
-            })
-            .then(response => response.json())
-            .then(data => {
-                scheduler.changeEventId(id, data.id);
+            // 🔹 Atualizar aula ao editar um evento
+            scheduler.attachEvent("onEventChanged", function (id, ev) {
+                fetch(`http://localhost:5505/aulas/${id}`, {
+                    method: "PUT",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify(ev)
+                });
+            });
+
+            // 🔹 Deletar aula ao excluir um evento
+            scheduler.attachEvent("onEventDeleted", function (id) {
+                fetch(`http://localhost:5505/aulas/${id}`, { method: "DELETE" });
             });
         });
-
-        scheduler.attachEvent("onEventChanged", function (id, ev) {
-            const aula = {
-                laboratorio: ev.laboratorio,
-                turma: ev.text,
-                diasSemana: ev.diasSemana,
-                horario: ev.start_date.split(" ")[1], 
-                materia_id: ev.materia_id
-            };
-
-            fetch(`http://localhost:5505/aulas/${id}`, {
-                method: "PUT",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(aula)
-            });
-        });
-
-        scheduler.attachEvent("onEventDeleted", function (id) {
-            fetch(`http://localhost:5505/aulas/${id}`, {
-                method: "DELETE"
-            });
-        });
-
-    </script>
-
+    </script>    
+    
 </body>
 </html>

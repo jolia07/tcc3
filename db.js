@@ -28,17 +28,19 @@ pool.query(`
 });
 
 pool.query(`
-  CREATE TABLE IF NOT EXISTS usuario (
-      id INT AUTO_INCREMENT PRIMARY KEY not null,
+  CREATE TABLE IF NOT EXISTS usuarios (
+      id INT AUTO_INCREMENT PRIMARY KEY,
       nome VARCHAR(255) NOT NULL,
       email VARCHAR(255) UNIQUE NOT NULL,
       senha VARCHAR(255) NOT NULL,
-      profilePic VARCHAR(255)
+      telefone VARCHAR(20) NOT NULL,
+      profilePic VARCHAR(255),
+      tipo ENUM('docente', 'adm') NOT NULL
   );
 `).then(() => {
-  console.log("Tabela 'usuario' pronta!");
+  console.log("Tabela 'usuarios' criada com sucesso!");
 }).catch(err => {
-  console.error("Erro ao criar a tabela 'usuario':", err);
+  console.error("Erro ao criar a tabela 'usuarios':", err);
 });
 
 pool.query(`

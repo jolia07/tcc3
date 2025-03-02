@@ -41,7 +41,7 @@ app.use(session({
 
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
-    cb(null, path.join(__dirname, 'public', 'img'));
+    cb(null, path.join(__dirname, 'img'));
   },
   filename: (req, file, cb) => {
     const userId = req.session.user.id;
@@ -84,7 +84,7 @@ app.post('/login', async (req, res) => {
   const { email, senha } = req.body;
 
   try {
-    const [rows] = await pool.query('SELECT * FROM usuario WHERE email = ?', [email]);
+    const [rows] = await pool.query('SELECT * FROM usuarios WHERE email = ?', [email]);
 
     if (rows.length === 0) {
       return res.status(401).send('E-mail ou senha incorretos!');
@@ -114,21 +114,25 @@ app.post('/login', async (req, res) => {
 
 // Rota de cadastro
 app.post('/cadastro', async (req, res) => {
-  const { nome, email, senha, profilePic } = req.body;
+  const { nome, email, senha, tipo } = req.body;
+
+  if (!['docente', 'adm'].includes(tipo)) {
+    return res.status(400).json({ message: "Tipo inválido! Use 'docente' ou 'adm'." });
+  }
 
   try {
-    const [checkUser] = await pool.query('SELECT * FROM usuario WHERE email = ?', [email]);
+    const [checkUser] = await pool.query('SELECT * FROM usuarios WHERE email = ?', [email]);
     if (checkUser.length > 0) {
       return res.status(409).send('Usuário já existe');
     }
 
     const senhaCriptografada = await bcrypt.hash(senha, 10);
     const [result] = await pool.query(
-      'INSERT INTO usuario (nome, email, senha, profilePic) VALUES (?, ?, ?, ?)',
-      [nome, email, senhaCriptografada, profilePic]
+      'INSERT INTO usuarios (nome, email, senha, tipo) VALUES (?, ?, ?, ?)',
+      [nome, email, senhaCriptografada, tipo]
     );
 
-    req.session.user = { id: result.insertId, email };
+    req.session.user = { id: result.insertId, email, tipo };
     console.log('Usuário registrado:', req.session.user);
     res.redirect('perfil');
 
@@ -143,13 +147,13 @@ app.post('/atualizarSenha', async (req, res) => {
   const { email, newPassword } = req.body;
 
   try {
-    const [rows] = await pool.query('SELECT * FROM usuario WHERE email = ?', [email]);
+    const [rows] = await pool.query('SELECT * FROM usuarios WHERE email = ?', [email]);
     if (rows.length === 0) {
       return res.json({ success: false, message: 'Usuário não encontrado.' });
     }
 
     const senhaCriptografada = await bcrypt.hash(newPassword, 10);
-    await pool.query('UPDATE usuario SET senha = ? WHERE email = ?', [senhaCriptografada, email]);
+    await pool.query('UPDATE usuarios SET senha = ? WHERE email = ?', [senhaCriptografada, email]);
 
     res.json({ success: true, message: 'Senha atualizada com sucesso!' });
 
@@ -166,7 +170,7 @@ app.post('/atualizarPerfil', verificarAutenticacao, async (req, res) => {
 
   try {
     const senhaCriptografada = await bcrypt.hash(senha, 10);
-    await pool.query('UPDATE usuario SET nome = ?, email = ?, senha = ? WHERE id = ?', 
+    await pool.query('UPDATE usuarios SET nome = ?, email = ?, senha = ? WHERE id = ?', 
       [nome, email, senhaCriptografada, userId]);
 
     res.json({ message: 'Perfil atualizado com sucesso!' });
@@ -187,7 +191,7 @@ app.post('/upload-profile-image', verificarAutenticacao, upload.single('profileP
     const userId = req.session.user.id;
     const imagePath = req.file.filename;
 
-    await pool.query('UPDATE usuario SET profilePic = ? WHERE id = ?', [imagePath, userId]);
+    await pool.query('UPDATE usuarios SET profilePic = ? WHERE id = ?', [imagePath, userId]);
     res.json({ message: 'Imagem atualizada com sucesso!', filename: imagePath });
 
   } catch (err) {
@@ -208,12 +212,16 @@ app.get('/calendario', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'perfil.html'));
 });
 
+app.get('/home', (req, res) => {
+  res.sendFile(__dirname + '/public/home.html'); // Substitua pelo caminho correto
+});
+
 // Rota para buscar dados do usuário
 app.get('/getUserData', verificarAutenticacao, async (req, res) => {
   const userId = req.session.user.id;
 
   try {
-    const [rows] = await pool.query('SELECT nome, email, profilePic FROM usuario WHERE id = ?', [userId]);
+    const [rows] = await pool.query('SELECT nome, email, telefone, profilePic, tipo FROM usuarios WHERE id = ?', [userId]);
     res.json(rows[0]);
 
   } catch (err) {
@@ -221,133 +229,88 @@ app.get('/getUserData', verificarAutenticacao, async (req, res) => {
     res.status(500).send('Erro no servidor.');
   }
 });
-
-app.post("/materia", async (req, res) => {
-  if (!req.session.user) {  // Corrigido de req.session.user_id para req.session.user
-    return res.status(401).json({ success: false, message: "Usuário não autenticado" });
-}
-
-  const { uc, ch } = req.body;
-  const user_id = req.session.user.id; // Obtém o user_id da sessão
-
+// 🔹 Buscar todas as matérias
+app.get("/materias", async (req, res) => {
   try {
-      await pool.query("INSERT INTO materia (uc, ch, user_id) VALUES (?, ?, ?)", [uc, ch, user_id]);
-      res.json({ success: true, message: "Matéria cadastrada com sucesso" });
+      const [results] = await pool.query("SELECT * FROM materia");
+      res.json(results);
   } catch (error) {
-      console.error("Erro ao cadastrar matéria:", error);
-      res.status(500).json({ success: false, message: "Erro ao cadastrar matéria" });
+      console.error("Erro ao buscar matérias:", error);
+      res.status(500).json({ error: "Erro ao buscar matérias" });
   }
 });
 
-// Rota para buscar todas as aulas do usuário logado
-app.get('/aula', verificarAutenticacao, async (req, res) => {
-  const userId = req.session.user.id;
+// 🔹 Buscar todas as aulas com as matérias associadas
+app.get("/aulas", async (req, res) => {
+  const query = `
+      SELECT aula.*, materia.uc, materia.ch 
+      FROM aula 
+      LEFT JOIN materia ON aula.materia_id = materia.id`;
+  
+  try {
+      const [results] = await pool.query(query);
+      res.json(results);
+  } catch (error) {
+      console.error("Erro ao buscar aulas:", error);
+      res.status(500).json({ error: "Erro ao buscar aulas" });
+  }
+});
+
+// 🔹 Criar uma nova aula
+app.post("/aulas", async (req, res) => {
+  const { turno, laboratorio, turma, diasSemana, horario, materia_id } = req.body;
+
+  const query = `
+      INSERT INTO aula (turno, laboratorio, turma, diasSemana, horario, materia_id) 
+      VALUES (?, ?, ?, ?, ?, ?)`;
+  const values = [turno, laboratorio, turma, diasSemana, horario, materia_id];
 
   try {
-      const [rows] = await pool.query(`
-          SELECT a.id, a.laboratorio, a.turma, a.diasSemana, a.horario, a.materia_id, m.uc AS materia 
-          FROM aula a
-          JOIN materia m ON a.materia_id = m.id
-          WHERE m.user_id = ?
-      `, [userId]);
-
-      res.json(rows);
-  } catch (err) {
-      console.error('Erro ao buscar aulas:', err);
-      res.status(500).send('Erro no servidor.');
+      const [result] = await pool.query(query, values);
+      res.json({ id: result.insertId, ...req.body });
+  } catch (error) {
+      console.error("Erro ao criar aula:", error);
+      res.status(500).json({ error: "Erro ao criar aula" });
   }
 });
 
-// Rota para adicionar uma aula associada a uma matéria existente
-app.post('/aula', verificarAutenticacao, async (req, res) => {
-  const { laboratorio, turma, diasSemana, horario, materia_nome } = req.body;
-  const userId = req.session.user.id;
+// 🔹 Atualizar uma aula existente
+app.put("/aulas/:id", async (req, res) => {
+  const { turno, laboratorio, turma, diasSemana, horario, materia_id } = req.body;
+  
+  const query = `
+      UPDATE aula 
+      SET turno=?, laboratorio=?, turma=?, diasSemana=?, horario=?, materia_id=? 
+      WHERE id=?`;
+  const values = [turno, laboratorio, turma, diasSemana, horario, materia_id, req.params.id];
 
   try {
-      // Verificar se a matéria existe no banco
-      const [materiaRows] = await pool.query('SELECT id FROM materia WHERE uc = ?', [materia_nome]);
-      
-      if (materiaRows.length === 0) {
-          return res.status(400).json({ message: 'Matéria não encontrada' });
-      }
-
-      const materia_id = materiaRows[0].id;
-
-      // Inserir a nova aula associada à matéria
-      const [result] = await pool.query(
-          'INSERT INTO aula (laboratorio, turma, diasSemana, horario, materia_id, user_id) VALUES (?, ?, ?, ?, ?, ?)',
-          [laboratorio, turma, diasSemana, horario, materia_id, userId]
-      );
-
-      res.status(201).json({ id: result.insertId, message: 'Aula adicionada com sucesso' });
-  } catch (err) {
-      console.error('Erro ao adicionar aula:', err);
-      res.status(500).send('Erro no servidor');
+      await pool.query(query, values);
+      res.json({ message: "Aula atualizada!" });
+  } catch (error) {
+      console.error("Erro ao atualizar aula:", error);
+      res.status(500).json({ error: "Erro ao atualizar aula" });
   }
 });
 
-// Rota para atualizar uma aula
-app.put('/aula/:id', verificarAutenticacao, async (req, res) => {
-  const { laboratorio, turma, diasSemana, horario, materia_id } = req.body;
-  const aulaId = req.params.id;
-  const userId = req.session.user.id;
-
+// 🔹 Deletar uma aula
+app.delete("/aulas/:id", async (req, res) => {
   try {
-      // Verifica se a aula pertence a uma matéria do usuário
-      const [aula] = await pool.query(`
-          SELECT a.id FROM aula a
-          JOIN materia m ON a.materia_id = m.id
-          WHERE a.id = ? AND m.user_id = ?
-      `, [aulaId, userId]);
-
-      if (aula.length === 0) {
-          return res.status(403).send('Acesso negado. Aula não pertence ao usuário.');
-      }
-
-      await pool.query(
-          'UPDATE aula SET laboratorio = ?, turma = ?, diasSemana = ?, horario = ?, materia_id = ? WHERE id = ?',
-          [laboratorio, turma, diasSemana, horario, materia_id, aulaId]
-      );
-
-      res.json({ message: 'Aula atualizada com sucesso!' });
-  } catch (err) {
-      console.error('Erro ao atualizar aula:', err);
-      res.status(500).send('Erro no servidor.');
+      await pool.query("DELETE FROM aula WHERE id = ?", [req.params.id]);
+      res.json({ message: "Aula deletada!" });
+  } catch (error) {
+      console.error("Erro ao deletar aula:", error);
+      res.status(500).json({ error: "Erro ao deletar aula" });
   }
 });
-
-// Rota para excluir uma aula
-app.delete('/aula/:id', verificarAutenticacao, async (req, res) => {
-  const aulaId = req.params.id;
-  const userId = req.session.user.id;
-
-  try {
-      // Verifica se a aula pertence a uma matéria do usuário antes de excluir
-      const [aula] = await pool.query(`
-          SELECT a.id FROM aula a
-          JOIN materia m ON a.materia_id = m.id
-          WHERE a.id = ? AND m.user_id = ?
-      `, [aulaId, userId]);
-
-      if (aula.length === 0) {
-          return res.status(403).send('Acesso negado. Aula não pertence ao usuário.');
-      }
-
-      await pool.query('DELETE FROM aula WHERE id = ?', [aulaId]);
-      res.json({ message: 'Aula excluída com sucesso!' });
-
-  } catch (err) {
-      console.error('Erro ao excluir aula:', err);
-      res.status(500).send('Erro no servidor.');
-  }
-});
-
 
 // Rota de logout
 app.post('/logout', (req, res) => {
   req.session.destroy(err => {
-    if (err) return res.status(500).send('Erro ao encerrar sessão.');
-    res.status(200).send('Logout realizado com sucesso!');
+      if (err) return res.status(500).send('Erro ao encerrar sessão.');
+
+      res.clearCookie('connect.sid'); // Limpa o cookie de sessão
+      res.redirect('/'); // Redireciona para a página inicial
   });
 });
 

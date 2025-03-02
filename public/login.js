@@ -46,3 +46,9 @@ updateLink.addEventListener('click', (e) => {
     wrapper.querySelector('.form-box.register').style.display = 'none'; // Oculta registro
     wrapper.querySelector('.form-box.update').style.display = 'block'; // Exibe atualização de senha
 });
+
+// Fecha o popup
+iconClose.addEventListener('click', () => {
+    wrapper.classList.remove('show');
+    overlay.classList.remove('show');
+});

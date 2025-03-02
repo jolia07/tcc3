@@ -13,6 +13,7 @@
 <body>
     <header>
         <nav class="navigation">
+            <img class="logo" src="/img/senailogo_nova.png">
             <button class="btnLogin-popup">Login</button>
         </nav>
     </header>
@@ -55,6 +56,18 @@
             <h2>Cadastro</h2>
             <form action="#">
                 <div class="input-box">
+<<<<<<< HEAD
+=======
+                    <span class="icon"><ion-icon name="people"></ion-icon></span>
+                    <select id="tipo" required>
+                        <option value="" disabled selected>Selecione o tipo</option>
+                        <option value="docente">Docente</option>
+                        <option value="adm">Administrador</option>
+                    </select>
+                </div> 
+                               
+                <div class="input-box">
+>>>>>>> bf7e9d7 (tcc2)
                     <span class="icon"><ion-icon name="person"></ion-icon></span>
                     <input type="text" required>
                     <label>Nome</label>
@@ -145,13 +158,14 @@
         const nome = this.querySelector('input[type="text"]').value;
         const email = this.querySelector('input[type="email"]').value;
         const senha = this.querySelector('input[type="password"]').value;
+        const tipo = this.querySelector('select').value;
     
         fetch('/cadastro', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
             },
-            body: JSON.stringify({ nome, email, senha }),
+            body: JSON.stringify({ nome, email, senha, tipo }),
         })
         .then(response => {
             if (response.ok) {
