@@ -1,0 +1,45 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body{
+    background: gray;
+    font-family: sans-serif;
+}
+
+
+h2.titulo{
+    color:white;
+    font-size: 38px;
+    text-align: center;
+}
+
+header {
+    background: #155241;
+    padding: 40px 4%;
+    display: flex;
+    justify-content: space-between;  
+    align-items: center;  
+}
+
+.logo {
+    width: 162px;
+    height: 57.5px;
+}
+
+.navigation {
+    display: flex;  
+    justify-content: space-between;  
+    align-items: center;  
+    width: 100%; 
+}
+
+.btnLogin-popup {
+    padding: 10px 20px;  
+    font-size: 16px; 
+    background-color: #fff;
+    border: 1px solid #ccc;
+    cursor: pointer;
+}

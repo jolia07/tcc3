@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Calendário</title>
+    <link rel="stylesheet" href="https://cdn.dhtmlx.com/scheduler/edge/dhtmlxscheduler.css">
+    <script src="https://cdn.dhtmlx.com/scheduler/edge/dhtmlxscheduler.js"></script>
+    <link rel="stylesheet" href="calendario.css">
+</head>
+<body>
+
+    <div id="scheduler"></div>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", async function () {
+            scheduler.config.xml_date = "%Y-%m-%d %H:%i";
+            scheduler.init("scheduler", new Date(), "month");
+
+            // 🔹 Buscar matérias e armazenar em uma variável global
+            let materias = [];
+            await fetch("http://localhost:5505/materias")
+                .then(response => response.json())
+                .then(data => materias = data);
+
+            // 🔹 Buscar aulas já registradas e exibir no calendário
+            fetch("http://localhost:5505/aulas")
+                .then(response => response.json())
+                .then(data => {
+                    const events = data.map(aula => ({
+                        id: aula.id,
+                        text: `${aula.uc} - ${aula.turma}`,
+                        start_date: aula.horario,
+                        end_date: aula.horario,
+                        turma: aula.turma,
+                        turno: aula.turno,
+                        laboratorio: aula.laboratorio,
+                        diasSemana: aula.diasSemana,
+                        materia_id: aula.materia_id
+                    }));
+                    scheduler.parse(events, "json");
+                });
+
+            // 🔹 Criar formulário de edição com todas as informações
+            scheduler.config.lightbox.sections = [
+                { name: "Matéria", height: 30, map_to: "materia_id", type: "select", options: materias.map(m => ({ key: m.id, label: m.uc })) },
+                { name: "Turma", height: 30, map_to: "turma", type: "textarea" },
+                { name: "Turno", height: 30, map_to: "turno", type: "select", options: [
+                    { key: "Matutino", label: "Matutino" },
+                    { key: "Vespertino", label: "Vespertino" },
+                    { key: "Noturno", label: "Noturno" }
+                ]},
+                { name: "Laboratório", height: 30, map_to: "laboratorio", type: "textarea" },
+                { name: "Dias da Semana", height: 30, map_to: "diasSemana", type: "textarea" },
+                { name: "Horário", height: 30, map_to: "start_date", type: "time" },
+                { name: "End", height: 30, map_to: "end_date", type: "time" },
+                { name: "description", height: 200, map_to: "text", type: "textarea" },
+                { name: "time", height: 72, type: "time", map_to: "auto" }
+            ];
+
+            // 🔹 Salvar aula no banco de dados ao adicionar um evento
+            scheduler.attachEvent("onEventAdded", function (id, ev) {
+                fetch("http://localhost:5505/aulas", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify(ev)
+                })
+                .then(response => response.json())
+                .then(data => scheduler.changeEventId(id, data.id));
+            });
+
+            // 🔹 Atualizar aula ao editar um evento
+            scheduler.attachEvent("onEventChanged", function (id, ev) {
+                fetch(`http://localhost:5505/aulas/${id}`, {
+                    method: "PUT",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify(ev)
+                });
+            });
+
+            // 🔹 Deletar aula ao excluir um evento
+            scheduler.attachEvent("onEventDeleted", function (id) {
+                fetch(`http://localhost:5505/aulas/${id}`, { method: "DELETE" });
+            });
+        });
+    </script>    
+    
+</body>
+</html>
