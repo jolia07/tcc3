@@ -229,7 +229,6 @@ app.get('/getUserData', verificarAutenticacao, async (req, res) => {
     res.status(500).send('Erro no servidor.');
   }
 });
-<<<<<<< HEAD
 
 // Rota para cadastrar matéria
 app.post('/materias', async (req, res) => {
@@ -351,95 +350,13 @@ app.get('/aulas', async (req, res) => {
   }
 });
 
-=======
-// 🔹 Buscar todas as matérias
-app.get("/materias", async (req, res) => {
-  try {
-      const [results] = await pool.query("SELECT * FROM materia");
-      res.json(results);
-  } catch (error) {
-      console.error("Erro ao buscar matérias:", error);
-      res.status(500).json({ error: "Erro ao buscar matérias" });
-  }
-});
-
-// 🔹 Buscar todas as aulas com as matérias associadas
-app.get("/aulas", async (req, res) => {
-  const query = `
-      SELECT aula.*, materia.uc, materia.ch 
-      FROM aula 
-      LEFT JOIN materia ON aula.materia_id = materia.id`;
-  
-  try {
-      const [results] = await pool.query(query);
-      res.json(results);
-  } catch (error) {
-      console.error("Erro ao buscar aulas:", error);
-      res.status(500).json({ error: "Erro ao buscar aulas" });
-  }
-});
-
-// 🔹 Criar uma nova aula
-app.post("/aulas", async (req, res) => {
-  const { turno, laboratorio, turma, diasSemana, horario, materia_id } = req.body;
-
-  const query = `
-      INSERT INTO aula (turno, laboratorio, turma, diasSemana, horario, materia_id) 
-      VALUES (?, ?, ?, ?, ?, ?)`;
-  const values = [turno, laboratorio, turma, diasSemana, horario, materia_id];
-
-  try {
-      const [result] = await pool.query(query, values);
-      res.json({ id: result.insertId, ...req.body });
-  } catch (error) {
-      console.error("Erro ao criar aula:", error);
-      res.status(500).json({ error: "Erro ao criar aula" });
-  }
-});
-
-// 🔹 Atualizar uma aula existente
-app.put("/aulas/:id", async (req, res) => {
-  const { turno, laboratorio, turma, diasSemana, horario, materia_id } = req.body;
-  
-  const query = `
-      UPDATE aula 
-      SET turno=?, laboratorio=?, turma=?, diasSemana=?, horario=?, materia_id=? 
-      WHERE id=?`;
-  const values = [turno, laboratorio, turma, diasSemana, horario, materia_id, req.params.id];
-
-  try {
-      await pool.query(query, values);
-      res.json({ message: "Aula atualizada!" });
-  } catch (error) {
-      console.error("Erro ao atualizar aula:", error);
-      res.status(500).json({ error: "Erro ao atualizar aula" });
-  }
-});
-
-// 🔹 Deletar uma aula
-app.delete("/aulas/:id", async (req, res) => {
-  try {
-      await pool.query("DELETE FROM aula WHERE id = ?", [req.params.id]);
-      res.json({ message: "Aula deletada!" });
-  } catch (error) {
-      console.error("Erro ao deletar aula:", error);
-      res.status(500).json({ error: "Erro ao deletar aula" });
-  }
-});
->>>>>>> bf7e9d71bfbb9f37b6c66add058a0a736afe077d
 
 // Rota de logout
 app.post('/logout', (req, res) => {
   req.session.destroy(err => {
       if (err) return res.status(500).send('Erro ao encerrar sessão.');
-
-<<<<<<< HEAD
-      res.clearCookie('connect.sid');
-      res.redirect('/');
-=======
       res.clearCookie('connect.sid'); // Limpa o cookie de sessão
       res.redirect('/'); // Redireciona para a página inicial
->>>>>>> bf7e9d71bfbb9f37b6c66add058a0a736afe077d
   });
 });
 
