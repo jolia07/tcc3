@@ -8,8 +8,11 @@
     "express": "^4.21.2",
     "express-session": "^1.18.1",
     "fs": "^0.0.1-security",
+<<<<<<< HEAD
     "fullcalendar": "^6.1.15",
     "fullcalendar-scheduler": "^6.1.15",
+=======
+>>>>>>> bf7e9d71bfbb9f37b6c66add058a0a736afe077d
     "multer": "^1.4.5-lts.1",
     "mysql2": "^3.12.0",
     "path": "^0.12.7",

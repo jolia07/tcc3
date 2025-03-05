@@ -74,16 +74,29 @@
         });
 
         function logout() {
+<<<<<<< HEAD
          fetch('/logout', { method: 'POST' })
          .then(response => {
+=======
+    fetch('/logout', { method: 'POST' })
+        .then(response => {
+>>>>>>> bf7e9d71bfbb9f37b6c66add058a0a736afe077d
             if (response.redirected) {
                 window.location.href = response.url; // Redireciona corretamente
             } else {
                 return response.text();
             }
+<<<<<<< HEAD
           })
          .catch(error => console.error('Erro no logout:', error));
         }
+=======
+        })
+        .catch(error => console.error('Erro no logout:', error));
+}
+
+
+>>>>>>> bf7e9d71bfbb9f37b6c66add058a0a736afe077d
 
         carregarDados();
 
