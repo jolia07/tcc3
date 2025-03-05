@@ -1,59 +1,56 @@
-html, body {
+.modal {
+    display: none;
+    position: fixed;
+    z-index: 1000;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    background-color: white;
+    padding: 20px;
+    width: 50%;
+    border-radius: 10px;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+    animation: fadeIn 0.3s ease-in-out;
+}
+
+.modal-overlay {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
     height: 100%;
-    padding: 0;
-    margin: 0;
-    overflow: hidden;
+    background: rgba(0, 0, 0, 0.5);
+    backdrop-filter: blur(5px); 
+    z-index: 999;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translate(-50%, -55%); }
+    to { opacity: 1; transform: translate(-50%, -50%); }
+}
+
+button {
+    padding: 10px 15px;
+    margin: 10px;
+    border: none;
+    cursor: pointer;
+    background: #007bff;
+    color: white;
+    border-radius: 5px;
+}
+
+button:hover {
+    background: #0056b3;
+}
+
+.close {
+    float: right;
+    font-size: 20px;
+    cursor: pointer;
+}
+
+body {
+    text-align: center;
     font-family: Arial, sans-serif;
-    background-color: #f4f7fc;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-}
-#scheduler {
-    width: 95vw;
-    height: 95vh;
-    padding: 10px;
-    box-sizing: border-box;
-}
-.dhx_cal_navline {
-    background: #2c3e50 !important;
-}
-.dhx_cal_tab, .dhx_cal_next_button, .dhx_cal_prev_button {
-    background: #1f618d !important;
-    color: white !important;
-    border-radius: 5px;
-}
-.dhx_cal_today_button {
-    background: #2980b9 !important;
-    color: white !important;
-    font-weight: bold;
-    border-radius: 5px;
-}
-.dhx_cal_header, .dhx_cal_data {
-    border-color: #d0d9e8 !important;
-}
-.dhx_month_head {
-    background: #ecf0f1 !important;
-    color: #2c3e50 !important;
-    font-weight: bold;
-    text-align: center;
-}
-.dhx_scale_bar {
-    background: #2980b9 !important;
-    color: white !important;
-    text-align: center;
-    font-weight: bold;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-}
-.dhx_cal_event .dhx_body {
-    background: #3498db !important;
-    color: white !important;
-    border-radius: 5px;
-}
-.dhx_cal_event .dhx_title {
-    background: #2980b9 !important;
-    color: white !important;
-    font-weight: bold;
 }

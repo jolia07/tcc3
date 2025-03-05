@@ -229,88 +229,135 @@ app.get('/getUserData', verificarAutenticacao, async (req, res) => {
     res.status(500).send('Erro no servidor.');
   }
 });
-// 🔹 Buscar todas as matérias
-app.get("/materias", async (req, res) => {
+
+// Rota para cadastrar matéria
+app.post('/materias', async (req, res) => {
+  const { uc, ch } = req.body;
+  await pool.query("INSERT INTO materia (uc, ch) VALUES (?, ?)", [uc, ch]);
+  res.json({ message: "Matéria cadastrada com sucesso!" });
+});
+
+// Rota para buscar matérias
+app.get('/materias', async (req, res) => {
+  const [rows] = await pool.query("SELECT * FROM materia");
+  res.json(rows);
+});
+
+// 🛠 Função para calcular a próxima data com base no dia da semana
+function obterProximaData(diaSemana) {
+  const diasMap = { "Segunda": 1, "Terça": 2, "Quarta": 3, "Quinta": 4, "Sexta": 5 };
+  let hoje = new Date();
+  let diaAtual = hoje.getDay();
+  let diasAFrente = (diasMap[diaSemana] - diaAtual + 7) % 7;
+  if (diasAFrente === 0) diasAFrente = 7;
+  let proximaData = new Date();
+  proximaData.setDate(hoje.getDate() + diasAFrente);
+  return proximaData.toISOString().split('T')[0];
+}
+
+// 🛠 Função para gerar horário automático baseado no turno
+async function gerarHorarioAutomaticoPorTurno(laboratorio, dataConclusao, turno) {
   try {
-      const [results] = await pool.query("SELECT * FROM materia");
-      res.json(results);
-  } catch (error) {
-      console.error("Erro ao buscar matérias:", error);
-      res.status(500).json({ error: "Erro ao buscar matérias" });
+      const horariosTurno = {
+          "Matutino": { inicio: "08:00:00", limite: "12:00:00" },
+          "Vespertino": { inicio: "13:00:00", limite: "17:00:00" },
+          "Noturno": { inicio: "18:00:00", limite: "21:00:00" }
+      };
+
+      if (!horariosTurno[turno]) return "08:00:00";
+
+      const { inicio, limite } = horariosTurno[turno];
+
+      const [rows] = await pool.query(
+          "SELECT horario FROM aula WHERE laboratorio = ? AND dataConclusao = ? AND turno = ? ORDER BY horario DESC LIMIT 1",
+          [laboratorio, dataConclusao, turno]
+      );
+
+      if (rows.length > 0) {
+          let ultimoHorario = rows[0].horario;
+          let [hora, minuto, segundo] = ultimoHorario.split(':').map(Number);
+          hora += 2;
+          if (`${hora.toString().padStart(2, '0')}:00:00` > limite) return null;
+          return `${hora.toString().padStart(2, '0')}:${minuto.toString().padStart(2, '0')}:00`;
+      } else {
+          return inicio;
+      }
+  } catch (err) {
+      console.error("Erro ao gerar horário:", err);
+      return "08:00:00";
+  }
+}
+
+// 🛠 Rota para cadastrar aulas
+app.post('/aulas', async (req, res) => {
+  try {
+      const { materia_id, turma, turno, laboratorio, diasSemana } = req.body;
+      if (!materia_id || !turma || !turno || !laboratorio || !diasSemana || diasSemana.length === 0) {
+          return res.status(400).json({ message: "Todos os campos são obrigatórios." });
+      }
+
+      const [rows] = await pool.query("SELECT ch FROM materia WHERE id = ?", [materia_id]);
+      if (rows.length === 0) return res.status(404).json({ message: "Matéria não encontrada." });
+
+      let cargaHorariaRestante = rows[0].ch;
+      let aulasCriadas = [];
+
+      if (cargaHorariaRestante <= 0) {
+          return res.status(400).json({ message: "A carga horária já foi preenchida!" });
+      }
+
+      while (cargaHorariaRestante > 0) {
+          for (let dia of diasSemana) {
+              if (cargaHorariaRestante <= 0) break;
+              let dataAula = obterProximaData(dia);
+              const horario = await gerarHorarioAutomaticoPorTurno(laboratorio, dataAula, turno);
+              if (!horario) return res.status(400).json({ message: `Sem horários disponíveis no turno ${turno}.` });
+
+              const [result] = await pool.query(
+                  "INSERT INTO aula (materia_id, turma, turno, laboratorio, horario, dataConclusao) VALUES (?, ?, ?, ?, ?, ?)",
+                  [materia_id, turma, turno, laboratorio, horario, dataAula]
+              );
+
+              aulasCriadas.push({ id: result.insertId, turma, turno, laboratorio, horario, dataConclusao: dataAula });
+              cargaHorariaRestante -= 2;
+          }
+      }
+
+      res.status(201).json({ message: "Aulas cadastradas com sucesso!", aulas: aulasCriadas });
+
+  } catch (err) {
+      console.error("Erro ao cadastrar aula:", err);
+      res.status(500).json({ message: "Erro no servidor." });
   }
 });
 
-// 🔹 Buscar todas as aulas com as matérias associadas
-app.get("/aulas", async (req, res) => {
-  const query = `
-      SELECT aula.*, materia.uc, materia.ch 
-      FROM aula 
-      LEFT JOIN materia ON aula.materia_id = materia.id`;
-  
+app.get('/aulas', async (req, res) => {
   try {
-      const [results] = await pool.query(query);
-      res.json(results);
-  } catch (error) {
-      console.error("Erro ao buscar aulas:", error);
-      res.status(500).json({ error: "Erro ao buscar aulas" });
+      const [rows] = await pool.query("SELECT id, turma AS title, dataConclusao AS start, horario FROM aula");
+
+      // Ajustar para o formato do FullCalendar
+      const aulasFormatadas = rows.map(aula => ({
+          id: aula.id,
+          title: `${aula.title} - ${aula.horario}`,
+          start: `${aula.start}T${aula.horario}`
+      }));
+
+      res.json(aulasFormatadas);
+
+  } catch (err) {
+      console.error("Erro ao buscar aulas:", err);
+      res.status(500).json({ message: "Erro ao buscar aulas" });
   }
 });
 
-// 🔹 Criar uma nova aula
-app.post("/aulas", async (req, res) => {
-  const { turno, laboratorio, turma, diasSemana, horario, materia_id } = req.body;
-
-  const query = `
-      INSERT INTO aula (turno, laboratorio, turma, diasSemana, horario, materia_id) 
-      VALUES (?, ?, ?, ?, ?, ?)`;
-  const values = [turno, laboratorio, turma, diasSemana, horario, materia_id];
-
-  try {
-      const [result] = await pool.query(query, values);
-      res.json({ id: result.insertId, ...req.body });
-  } catch (error) {
-      console.error("Erro ao criar aula:", error);
-      res.status(500).json({ error: "Erro ao criar aula" });
-  }
-});
-
-// 🔹 Atualizar uma aula existente
-app.put("/aulas/:id", async (req, res) => {
-  const { turno, laboratorio, turma, diasSemana, horario, materia_id } = req.body;
-  
-  const query = `
-      UPDATE aula 
-      SET turno=?, laboratorio=?, turma=?, diasSemana=?, horario=?, materia_id=? 
-      WHERE id=?`;
-  const values = [turno, laboratorio, turma, diasSemana, horario, materia_id, req.params.id];
-
-  try {
-      await pool.query(query, values);
-      res.json({ message: "Aula atualizada!" });
-  } catch (error) {
-      console.error("Erro ao atualizar aula:", error);
-      res.status(500).json({ error: "Erro ao atualizar aula" });
-  }
-});
-
-// 🔹 Deletar uma aula
-app.delete("/aulas/:id", async (req, res) => {
-  try {
-      await pool.query("DELETE FROM aula WHERE id = ?", [req.params.id]);
-      res.json({ message: "Aula deletada!" });
-  } catch (error) {
-      console.error("Erro ao deletar aula:", error);
-      res.status(500).json({ error: "Erro ao deletar aula" });
-  }
-});
 
 // Rota de logout
 app.post('/logout', (req, res) => {
   req.session.destroy(err => {
       if (err) return res.status(500).send('Erro ao encerrar sessão.');
 
-      res.clearCookie('connect.sid'); // Limpa o cookie de sessão
-      res.redirect('/'); // Redireciona para a página inicial
+      res.clearCookie('connect.sid');
+      res.redirect('/');
   });
 });
 

@@ -74,18 +74,16 @@
         });
 
         function logout() {
-    fetch('/logout', { method: 'POST' })
-        .then(response => {
+         fetch('/logout', { method: 'POST' })
+         .then(response => {
             if (response.redirected) {
                 window.location.href = response.url; // Redireciona corretamente
             } else {
                 return response.text();
             }
-        })
-        .catch(error => console.error('Erro no logout:', error));
-}
-
-
+          })
+         .catch(error => console.error('Erro no logout:', error));
+        }
 
         carregarDados();
 

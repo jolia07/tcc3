@@ -51,6 +51,7 @@ pool.query(`
       turma VARCHAR(255) UNIQUE NOT NULL,
       diasSemana varchar(255) NOT NULL,
       horario time,
+      dataConclusao varchar(255) not null,
       materia_id int,
       foreign key (materia_id) references materia(id) on delete cascade
   );
