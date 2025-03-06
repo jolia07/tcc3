@@ -3,22 +3,21 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<<<<<<< HEAD
     <title>Cadastro de Aulas</title>
-    <link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.15/main.min.css" rel="stylesheet">
-    <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.15/index.global.min.js"></script>
-=======
-    <title>Calendário</title>
-    <link rel="stylesheet" href="https://cdn.dhtmlx.com/scheduler/edge/dhtmlxscheduler.css">
-    <script src="https://cdn.dhtmlx.com/scheduler/edge/dhtmlxscheduler.js"></script>
->>>>>>> bf7e9d71bfbb9f37b6c66add058a0a736afe077d
     <link rel="stylesheet" href="calendario.css">
 </head>
 <body>
+    <div id="profile-container">
+        <img id="profilePic" src="img/default.png" alt="Foto de Perfil">
+        <div>
+            <p id="userName"></p>
+            <p id="userRole"></p>
+        </div>
+    </div>
 
-<<<<<<< HEAD
     <button onclick="openModal('modalMateria')">Cadastrar Matéria</button>
     <button onclick="openModal('modalAula')">Cadastrar Aula</button>
+    <button onclick="exportarParaExcel()">Exportar para Excel</button>
 
     <!-- Modal de Cadastro de Matérias -->
     <div id="modalMateria" class="modal">
@@ -36,218 +35,173 @@
             </form>
         </div>
     </div>
-<!-- Modal de Cadastro de Aulas -->
-<div id="modalAula" class="modal">
-    <div class="modal-content">
-        <span class="close" onclick="closeModal('modalAula')">&times;</span>
-        <h2>Cadastrar Aula</h2>
-        <form id="aulaForm">
-            <label for="materia">Matéria:</label>
-            <select id="materia" name="materia" required></select><br><br>
 
-            <label for="turma">Turma:</label>
-            <input type="text" id="turma" name="turma" required><br><br>
+    <!-- Modal de Cadastro de Aulas -->
+    <div id="modalAula" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeModal('modalAula')">&times;</span>
+            <h2>Cadastrar Aula</h2>
+            <form id="aulaForm">
+                <label for="materia">Matéria:</label>
+                <select id="materia" name="materia" required></select><br><br>
 
-            <label for="turno">Turno:</label>
-            <select id="turno" name="turno" required onchange="atualizarHorario()">
-                <option value="">Selecione o Turno</option>
-                <option value="Matutino">Matutino</option>
-                <option value="Vespertino">Vespertino</option>
-                <option value="Noturno">Noturno</option>
-            </select><br><br>
+                <label for="turma">Turma:</label>
+                <input type="text" id="turma" name="turma" required><br><br>
 
-            <label>Dias da Semana:</label><br>
-            <input type="checkbox" name="diasSemana" value="Segunda"> Segunda
-            <input type="checkbox" name="diasSemana" value="Terça"> Terça
-            <input type="checkbox" name="diasSemana" value="Quarta"> Quarta
-            <input type="checkbox" name="diasSemana" value="Quinta"> Quinta
-            <input type="checkbox" name="diasSemana" value="Sexta"> Sexta<br><br>
+                <label for="laboratorio">Laboratório:</label>
+                <input type="text" id="laboratorio" name="laboratorio" required><br><br>
 
-            <label for="laboratorio">Laboratório:</label>
-            <input type="text" id="laboratorio" name="laboratorio" required><br><br>
+                <label for="turno">Turno:</label>
+                <select id="turno" name="turno" required onchange="atualizarHorarios()">
+                    <option value="">Selecione o Turno</option>
+                    <option value="Matutino">Matutino</option>
+                    <option value="Vespertino">Vespertino</option>
+                    <option value="Noturno">Noturno</option>
+                </select><br><br>
 
-            <label for="dataConclusao">Data de Conclusão:</label>
-            <input type="date" id="dataConclusao" name="dataConclusao" required><br><br>
+                <!-- Horários -->
+                <label for="horarios">Horários:</label>
+                <select id="horarios" name="horarios" required>
+                <option value="">Selecione o horário</option>
+                </select><br><br>
 
-            <button type="submit">Salvar Aula</button>
-        </form>
+                <label>Dias da Semana:</label><br>
+                <input type="checkbox" name="diasSemana" value="Segunda"> Segunda
+                <input type="checkbox" name="diasSemana" value="Terça"> Terça
+                <input type="checkbox" name="diasSemana" value="Quarta"> Quarta
+                <input type="checkbox" name="diasSemana" value="Quinta"> Quinta
+                <input type="checkbox" name="diasSemana" value="Sexta"> Sexta<br><br>
+
+                <button type="submit">Salvar Aula</button>
+            </form>
+        </div>
     </div>
-</div>
-
-    <!-- Calendário -->
-    <h2>Calendário</h2>
-    <div id="calendar" style="max-width: 90%; margin: 20px auto;"></div>
 
     <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            var calendarEl = document.getElementById('calendar');
-            var calendar = new FullCalendar.Calendar(calendarEl, {
-                initialView: 'dayGridMonth',
-                locale: 'pt-br',
-                events: 'http://localhost:5505/aulas' // Carrega aulas do backend
-            });
-
-            calendar.render();
-
-            // Cadastrar Matéria
-            document.getElementById('materiaForm').addEventListener('submit', function(event) {
-                event.preventDefault();
-                const formData = {
-                    uc: document.getElementById('uc').value,
-                    ch: document.getElementById('ch').value
-                };
-
-                fetch('http://localhost:5505/materias', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(formData)
-                })
-                .then(response => response.json())
-                .then(data => {
-                    alert('Matéria cadastrada com sucesso!');
-                    closeModal('modalMateria');
-                    carregarMaterias();
-                });
-            });
-
-            // Cadastrar Aula
-            document.getElementById('aulaForm').addEventListener('submit', async function(event) {
-                event.preventDefault();
-
-                const diasSemanaSelecionados = Array.from(document.querySelectorAll('input[name="diasSemana"]:checked'))
-                    .map(el => el.value);
-
-                if (diasSemanaSelecionados.length === 0) {
-                    alert("Selecione pelo menos um dia da semana.");
-                    return;
+        async function carregarDadosUsuario() {
+            try {
+                const response = await fetch('/getUserData');
+                const data = await response.json();
+                
+                // Atualizar as informações do perfil
+                document.getElementById('userName').innerText = data.nome;
+                document.getElementById('userRole').innerText = data.tipo;
+                if (data.profilePic) {
+                    document.getElementById('profilePic').src = '/img/' + data.profilePic;
+                } else {
+                    document.getElementById('profilePic').src = '/img/default.png'; 
                 }
-
-                const formData = {
-                    materia_id: document.getElementById('materia').value,
-                    turma: document.getElementById('turma').value,
-                    turno: document.getElementById('turno').value,
-                    laboratorio: document.getElementById('laboratorio').value,
-                    diasSemana: diasSemanaSelecionados
-                };
-
-                try {
-                    const response = await fetch('http://localhost:5505/aulas', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify(formData)
-                    });
-
-                    const data = await response.json();
-
-                    if (response.ok) {
-                        alert('Aula cadastrada com sucesso!');
-                        closeModal('modalAula');
-                        calendar.refetchEvents();
-                    } else {
-                        alert('Erro ao cadastrar aula: ' + data.message);
-                    }
-                } catch (error) {
-                    console.error('Erro:', error);
-                    alert('Erro ao cadastrar aula. Verifique o console.');
-                }
-            }); 
-
-            // Carregar matérias no dropdown
-            function carregarMaterias() {
-                fetch('http://localhost:5505/materias')
-                    .then(response => response.json())
-                    .then(materias => {
-                        const select = document.getElementById('materia');
-                        select.innerHTML = materias.map(m => `<option value="${m.id}">${m.uc}</option>`).join('');
-                    });
+            } catch (error) {
+                console.error('Erro ao carregar dados do usuário:', error);
+                alert('Erro ao carregar perfil.');
             }
+        }
 
-            carregarMaterias();
+        async function carregarMaterias() {
+            const response = await fetch('http://localhost:5505/materias');
+            const materias = await response.json();
+            const select = document.getElementById('materia');
+            select.innerHTML = materias.map(m => `<option value="${m.id}">${m.uc}</option>`).join('');
+        }
+
+        function atualizarHorarios() {
+    const turno = document.getElementById('turno').value;
+    const horariosSelect = document.getElementById('horarios');
+    
+    // Limpar opções anteriores
+    horariosSelect.innerHTML = '<option value="">Selecione o horário</option>';
+
+    let horarios = [];
+
+    if (turno === 'Matutino') {
+        horarios = ['08:00', '09:00', '10:00', '11:00', '12:00']; // Exemplo de horários
+    } else if (turno === 'Vespertino') {
+        horarios = ['13:00', '14:00', '15:00', '16:00', '17:00']; // Exemplo de horários
+    } else if (turno === 'Noturno') {
+        horarios = ['18:00', '19:00', '20:00', '21:00', '22:00']; // Exemplo de horários
+    }
+
+    // Adicionar as opções ao select
+    horarios.forEach(horario => {
+        const option = document.createElement('option');
+        option.value = horario;
+        option.textContent = horario;
+        horariosSelect.appendChild(option);
+    });
+}
+
+
+        document.getElementById('materiaForm').addEventListener('submit', async function(event) {
+            event.preventDefault();
+            const formData = {
+                uc: document.getElementById('uc').value,
+                ch: document.getElementById('ch').value
+            };
+
+            const response = await fetch('http://localhost:5505/materias', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(formData)
+            });
+
+            if (response.ok) {
+                alert('Matéria cadastrada!');
+                closeModal('modalMateria');
+                carregarMaterias();
+            }
         });
 
-        // Funções para abrir/fechar modais
+        document.getElementById('aulaForm').addEventListener('submit', async function(event) {
+    event.preventDefault();
+    const diasSelecionados = Array.from(document.querySelectorAll('input[name="diasSemana"]:checked'))
+        .map(el => el.value);
+
+    if (diasSelecionados.length === 0) {
+        alert("Selecione pelo menos um dia da semana.");
+        return;
+    }
+
+    // Pegando o horário selecionado
+    const horariosSelecionados = Array.from(document.querySelectorAll('select[name="horarios"] option:checked'))
+    .map(el => el.value); // Garantindo que múltiplos horários possam ser selecionados.
+
+
+    if (horariosSelecionados.length === 0) {
+        alert("Selecione pelo menos um horário.");
+        return;
+    }
+
+    const formData = {
+        materia_id: document.getElementById('materia').value,
+        turma: document.getElementById('turma').value,
+        laboratorio: document.getElementById('laboratorio').value,
+        turno: document.getElementById('turno').value,
+        diasSemana: diasSelecionados,
+        horarios: horariosSelecionados
+    };
+
+    const response = await fetch('http://localhost:5505/aulas', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(formData)
+    });
+
+    if (response.ok) {
+        alert('Aula cadastrada!');
+        closeModal('modalAula');
+    }
+});
+
+        function exportarParaExcel() {
+            window.location.href = 'http://localhost:5505/exportar-excel';
+        }
+
         function openModal(id) { document.getElementById(id).style.display = 'block'; }
         function closeModal(id) { document.getElementById(id).style.display = 'none'; }
+
+        carregarMaterias();
+        carregarDadosUsuario(); 
     </script>
 
 </body>
 </html>
-=======
-    <div id="scheduler"></div>
-
-    <script>
-        document.addEventListener("DOMContentLoaded", async function () {
-            scheduler.config.xml_date = "%Y-%m-%d %H:%i";
-            scheduler.init("scheduler", new Date(), "month");
-
-            // 🔹 Buscar matérias e armazenar em uma variável global
-            let materias = [];
-            await fetch("http://localhost:5505/materias")
-                .then(response => response.json())
-                .then(data => materias = data);
-
-            // 🔹 Buscar aulas já registradas e exibir no calendário
-            fetch("http://localhost:5505/aulas")
-                .then(response => response.json())
-                .then(data => {
-                    const events = data.map(aula => ({
-                        id: aula.id,
-                        text: `${aula.uc} - ${aula.turma}`,
-                        start_date: aula.horario,
-                        end_date: aula.horario,
-                        turma: aula.turma,
-                        turno: aula.turno,
-                        laboratorio: aula.laboratorio,
-                        diasSemana: aula.diasSemana,
-                        materia_id: aula.materia_id
-                    }));
-                    scheduler.parse(events, "json");
-                });
-
-            // 🔹 Criar formulário de edição com todas as informações
-            scheduler.config.lightbox.sections = [
-                { name: "Matéria", height: 30, map_to: "materia_id", type: "select", options: materias.map(m => ({ key: m.id, label: m.uc })) },
-                { name: "Turma", height: 30, map_to: "turma", type: "textarea" },
-                { name: "Turno", height: 30, map_to: "turno", type: "select", options: [
-                    { key: "Matutino", label: "Matutino" },
-                    { key: "Vespertino", label: "Vespertino" },
-                    { key: "Noturno", label: "Noturno" }
-                ]},
-                { name: "Laboratório", height: 30, map_to: "laboratorio", type: "textarea" },
-                { name: "Dias da Semana", height: 30, map_to: "diasSemana", type: "textarea" },
-                { name: "Horário", height: 30, map_to: "start_date", type: "time" },
-                { name: "End", height: 30, map_to: "end_date", type: "time" },
-                { name: "description", height: 200, map_to: "text", type: "textarea" },
-                { name: "time", height: 72, type: "time", map_to: "auto" }
-            ];
-
-            // 🔹 Salvar aula no banco de dados ao adicionar um evento
-            scheduler.attachEvent("onEventAdded", function (id, ev) {
-                fetch("http://localhost:5505/aulas", {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify(ev)
-                })
-                .then(response => response.json())
-                .then(data => scheduler.changeEventId(id, data.id));
-            });
-
-            // 🔹 Atualizar aula ao editar um evento
-            scheduler.attachEvent("onEventChanged", function (id, ev) {
-                fetch(`http://localhost:5505/aulas/${id}`, {
-                    method: "PUT",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify(ev)
-                });
-            });
-
-            // 🔹 Deletar aula ao excluir um evento
-            scheduler.attachEvent("onEventDeleted", function (id) {
-                fetch(`http://localhost:5505/aulas/${id}`, { method: "DELETE" });
-            });
-        });
-    </script>    
-    
-</body>
-</html>
->>>>>>> bf7e9d71bfbb9f37b6c66add058a0a736afe077d

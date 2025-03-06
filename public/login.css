@@ -71,6 +71,61 @@
     transition: all 0.3s ease; 
 }
 
+.opcoes-conta {
+    width: 100%;
+    height: 45px;
+    background: transparent;
+    border: 2px solid white;
+    outline: none;
+    border-radius: 6px;
+    font-size: 1em;
+    color: white;
+    font-weight: 500;
+    padding: 5px;
+    cursor: pointer;
+    transition: background 0.3s ease, color 0.3s ease, border-color 0.3s ease, opacity 0.3s ease;
+    appearance: none; /* Remove o estilo padrão do select */
+}
+
+/* Estilo quando o select é focado */
+.opcoes-conta:focus {
+    background: rgba(255, 255, 255, 0.2);
+    border-color: #4682B4;
+}
+
+/* Cor do texto das opções */
+.opcoes-conta option {
+    background: #162938;
+    color: white;
+    font-size: 1em;
+    padding: 10px;
+}
+
+/* Quando o mouse passa por cima, adiciona opacidade */
+.opcoes-conta:hover {
+    background: rgba(255, 255, 255, 0.8); /* Reduz um pouco a intensidade do branco */
+    color: #162938;
+    opacity: 0.8;
+}
+
+/* Adicionando uma seta personalizada */
+.opcoes-conta::-ms-expand {
+    display: none;
+}
+
+.opcoes-conta::after {
+    content: "▼";
+    position: absolute;
+    right: 15px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 1em;
+    color: white;
+    pointer-events: none;
+}
+
+
+
 .wrapper.active-popup {
     transform: scale(1);
 }
@@ -95,6 +150,26 @@
     cursor: pointer;
     z-index: 1;
 }
+
+.wrapper .icon-back {
+    display: none;
+    position: absolute;
+    top: 0;
+    left: 0; 
+    width: 45px;
+    height: 45px;
+    background: #4682B4;
+    font-size: 2em;
+    color: white;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    border-bottom-right-radius: 20px; 
+    border-bottom-left-radius: 0; 
+    cursor: pointer;
+    z-index: 1;
+}
+
 
 .form-box h2 {
     font-size: 2em;
@@ -207,4 +282,28 @@
 
 .wrapper.show {
     display: flex; 
+}
+
+/*Check box ---------------------*/
+
+.verSenha {
+    appearance: none; 
+    width: 15px;
+    height: 15px;
+    border-radius: 50%; 
+    background-color: white; 
+    transition: background-color 0.3s ease, transform 0.2s ease; 
+    display: inline-block;
+    cursor: pointer;
+    position: relative;
+}
+
+.verSenha:checked {
+    background-color: #4682B4; 
+    border: 1px solid white; 
+    transform: scale(1.1); 
+}
+
+.verSenha:active {
+    transform: scale(0.9); 
 }

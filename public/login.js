@@ -4,7 +4,11 @@ const overlay = document.querySelector('.overlay');
 const iconClose = document.querySelector('.icon-close');
 const registerLink = document.querySelector('.register-link');
 const loginLink = document.querySelector('.login-link');
-const updateLink = document.querySelector('.update-link'); // Seleciona o link de "Esqueceu sua senha?"
+const updateLink = document.querySelector('.update-link'); 
+const senhaInput = document.querySelector(".input-senha");
+const checkbox = document.querySelectorAll(".verSenha");
+const iconBack = document.querySelector('.icon-back');
+
 
 // Abre o popup de login ao clicar no botão de login
 btnLoginPopup.addEventListener('click', () => {
@@ -13,6 +17,7 @@ btnLoginPopup.addEventListener('click', () => {
     wrapper.querySelector('.form-box.login').style.display = 'block'; // Mostra o formulário de login
     wrapper.querySelector('.form-box.register').style.display = 'none'; // Oculta o formulário de registro
     wrapper.querySelector('.form-box.update').style.display = 'none'; // Oculta o formulário de atualização
+    iconBack.style.display = 'none';
 });
 
 function openLoginPopup(link) {
@@ -21,6 +26,8 @@ function openLoginPopup(link) {
     wrapper.querySelector('.form-box.login').style.display = 'block'; // Mostra o formulário de login
     wrapper.querySelector('.form-box.register').style.display = 'none'; // Oculta o formulário de registro
     wrapper.querySelector('.form-box.update').style.display = 'none'; // Oculta o formulário de atualização
+    iconClose.style.display = 'flex';
+    iconBack.style.display = 'none';
 }
 
 // Abre o formulário de registro
@@ -42,13 +49,31 @@ loginLink.addEventListener('click', (e) => {
 // Abre o formulário de atualização de senha ao clicar em "Esqueceu sua senha?"
 updateLink.addEventListener('click', (e) => {
     e.preventDefault();
-    wrapper.querySelector('.form-box.login').style.display = 'none'; // Oculta login
-    wrapper.querySelector('.form-box.register').style.display = 'none'; // Oculta registro
-    wrapper.querySelector('.form-box.update').style.display = 'block'; // Exibe atualização de senha
+    wrapper.querySelector('.form-box.login').style.display = 'none';
+    wrapper.querySelector('.form-box.register').style.display = 'none';
+    wrapper.querySelector('.form-box.update').style.display = 'block';
+
+    iconBack.style.display = 'flex';
+    iconClose.style.display = 'none';
 });
 
 // Fecha o popup
 iconClose.addEventListener('click', () => {
     wrapper.classList.remove('show');
     overlay.classList.remove('show');
+});
+
+// Voltar para o formulário de login ao clicar na seta de voltar
+iconBack.addEventListener('click', () => {
+    openLoginPopup(); 
+});
+
+//Mostrar senha
+document.querySelectorAll('.verSenha').forEach(checkbox => {
+    checkbox.addEventListener('change', function() {
+        let senhaInputs = this.closest('form').querySelectorAll('.input-senha');
+        senhaInputs.forEach(input => {
+            input.type = this.checked ? 'text' : 'password';
+        });
+    });
 });

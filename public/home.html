@@ -8,11 +8,7 @@
     <link rel="stylesheet" href="login.css">
     <link rel="stylesheet" href="style.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css">
-<<<<<<< HEAD
     <title>SEPA</title>
-=======
-    <title>SisGe</title>
->>>>>>> bf7e9d71bfbb9f37b6c66add058a0a736afe077d
 </head>
 <body>
     <header>
@@ -28,6 +24,9 @@
         <span class="icon-close">
             <ion-icon name="close"></ion-icon>
         </span>
+        <span class="icon-back">
+            <i class="bi bi-arrow-left"></i>
+        </span>
 
         <div class="form-box login">
             <h2>Login</h2>
@@ -40,11 +39,11 @@
 
                 <div class="input-box">
                     <span class="icon"><ion-icon name="lock"></ion-icon></span>
-                    <input type="password" required>
+                    <input type="password" class="input-senha" required>
                     <label>Senha</label>
                 </div>
                 <div class="lembrar-esquecer">
-                    <label><input type="checkbox"> Lembrar-me</label>
+                    <label><input type="checkbox" class="verSenha">Mostrar senha</label>
                     <a href="#" class="update-link">Esqueceu sua senha?</a>
                 </div>
                 <button type="submit" class="btn">Login</button>
@@ -60,13 +59,8 @@
             <h2>Cadastro</h2>
             <form action="#">
                 <div class="input-box">
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
-=======
->>>>>>> bf7e9d71bfbb9f37b6c66add058a0a736afe077d
                     <span class="icon"><ion-icon name="people"></ion-icon></span>
-                    <select id="tipo" required>
+                    <select id="tipo" class="opcoes-conta" required>
                         <option value="" disabled selected>Selecione o tipo</option>
                         <option value="docente">Docente</option>
                         <option value="adm">Administrador</option>
@@ -74,10 +68,6 @@
                 </div> 
                                
                 <div class="input-box">
-<<<<<<< HEAD
->>>>>>> bf7e9d7 (tcc2)
-=======
->>>>>>> bf7e9d71bfbb9f37b6c66add058a0a736afe077d
                     <span class="icon"><ion-icon name="person"></ion-icon></span>
                     <input type="text" required>
                     <label>Nome</label>
@@ -91,11 +81,11 @@
 
                 <div class="input-box">
                     <span class="icon"><ion-icon name="lock"></ion-icon></span>
-                    <input type="password" required>
+                    <input type="password" class="input-senha" required>
                     <label>Senha</label>
                 </div>
                 <div class="lembrar-esquecer">
-                    <label><input type="checkbox"> Eu aceito os termos e condições</label>
+                    <label><input type="checkbox" class="verSenha">Mostrar senha</label>
                 </div>
                 <button type="submit" class="btn">Cadastrar</button>
                 <div class="login-register">
@@ -117,15 +107,20 @@
         
                 <div class="input-box">
                     <span class="icon"><ion-icon name="lock"></ion-icon></span>
-                    <input type="password" id="newPassword" required>
+                    <input type="password" id="newPassword" class="input-senha" required>
                     <label>Nova Senha</label>
                 </div>
         
                 <div class="input-box">
                     <span class="icon"><ion-icon name="lock"></ion-icon></span>
-                    <input type="password" id="confirmPassword" required>
+                    <input type="password" id="confirmPassword" class="input-senha" required>
                     <label>Confirmar Nova Senha</label>
                 </div>
+
+                <div class="lembrar-esquecer">
+                    <label><input type="checkbox" class="verSenha">Mostrar senha</label>
+                </div>
+
                 <button type="submit" class="btn">Atualizar Senha</button>
             </form>
         </div>        

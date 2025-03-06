@@ -38,7 +38,7 @@ pool.query(`
       tipo ENUM('docente', 'adm') NOT NULL
   );
 `).then(() => {
-  console.log("Tabela 'usuarios' criada com sucesso!");
+  console.log("Tabela 'usuarios' pronta!");
 }).catch(err => {
   console.error("Erro ao criar a tabela 'usuarios':", err);
 });
@@ -49,12 +49,8 @@ pool.query(`
       turno varchar(255) not null,
       laboratorio VARCHAR(255) NOT NULL,
       turma VARCHAR(255) UNIQUE NOT NULL,
+      horarios varchar(255) not null,
       diasSemana varchar(255) NOT NULL,
-      horario time,
-<<<<<<< HEAD
-      dataConclusao varchar(255) not null,
-=======
->>>>>>> bf7e9d71bfbb9f37b6c66add058a0a736afe077d
       materia_id int,
       foreign key (materia_id) references materia(id) on delete cascade
   );

@@ -24,6 +24,7 @@
         <button onclick="uploadImage()">Alterar Foto</button>
         <p><strong>Nome:</strong> <span id="userName"></span></p>
         <p><strong>Email:</strong> <span id="userEmail"></span></p>
+        <p><strong>Tipo:</strong><span id="userRole"></span></p>
         <button onclick="calendario()">Acessar calendário</button>
         <button onclick="logout()">Sair</button>
     </div>
@@ -37,6 +38,7 @@
 
                 document.getElementById('userName').innerText = data.nome;
                 document.getElementById('userEmail').innerText = data.email;
+                document.getElementById('userRole').innerText =  data.tipo; 
                 
                 if (data.profilePic) {
                     document.getElementById('profilePic').src = '/img/' + data.profilePic;
@@ -74,29 +76,16 @@
         });
 
         function logout() {
-<<<<<<< HEAD
          fetch('/logout', { method: 'POST' })
          .then(response => {
-=======
-    fetch('/logout', { method: 'POST' })
-        .then(response => {
->>>>>>> bf7e9d71bfbb9f37b6c66add058a0a736afe077d
             if (response.redirected) {
                 window.location.href = response.url; // Redireciona corretamente
             } else {
                 return response.text();
             }
-<<<<<<< HEAD
           })
          .catch(error => console.error('Erro no logout:', error));
         }
-=======
-        })
-        .catch(error => console.error('Erro no logout:', error));
-}
-
-
->>>>>>> bf7e9d71bfbb9f37b6c66add058a0a736afe077d
 
         carregarDados();
 

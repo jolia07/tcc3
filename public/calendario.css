@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 .modal {
     display: none;
     position: fixed;
@@ -54,64 +53,38 @@ button:hover {
 body {
     text-align: center;
     font-family: Arial, sans-serif;
-=======
-html, body {
-    height: 100%;
-    padding: 0;
+}
+
+#profile-container {
+    position: fixed;  
+    top: 20px; 
+    left: 20px; 
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: rgba(255, 255, 255, 0.95); 
+    padding: 12px;
+    border-radius: 8px;
+    box-shadow: 0px 2px 5px rgba(0, 0, 0, 0.2);
+    z-index: 1000; 
+}
+
+#profilePic {
+    width: 65px; 
+    height: 65px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 3px solid #4CAF50; 
+}
+
+#userName {
+    font-weight: bold;
+    font-size: 16px;
     margin: 0;
-    overflow: hidden;
-    font-family: Arial, sans-serif;
-    background-color: #f4f7fc;
-    display: flex;
-    justify-content: center;
-    align-items: center;
 }
-#scheduler {
-    width: 95vw;
-    height: 95vh;
-    padding: 10px;
-    box-sizing: border-box;
-}
-.dhx_cal_navline {
-    background: #2c3e50 !important;
-}
-.dhx_cal_tab, .dhx_cal_next_button, .dhx_cal_prev_button {
-    background: #1f618d !important;
-    color: white !important;
-    border-radius: 5px;
-}
-.dhx_cal_today_button {
-    background: #2980b9 !important;
-    color: white !important;
-    font-weight: bold;
-    border-radius: 5px;
-}
-.dhx_cal_header, .dhx_cal_data {
-    border-color: #d0d9e8 !important;
-}
-.dhx_month_head {
-    background: #ecf0f1 !important;
-    color: #2c3e50 !important;
-    font-weight: bold;
-    text-align: center;
-}
-.dhx_scale_bar {
-    background: #2980b9 !important;
-    color: white !important;
-    text-align: center;
-    font-weight: bold;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-}
-.dhx_cal_event .dhx_body {
-    background: #3498db !important;
-    color: white !important;
-    border-radius: 5px;
-}
-.dhx_cal_event .dhx_title {
-    background: #2980b9 !important;
-    color: white !important;
-    font-weight: bold;
->>>>>>> bf7e9d71bfbb9f37b6c66add058a0a736afe077d
+
+#userRole {
+    font-size: 14px;
+    color: #555;
+    margin: 0;
 }

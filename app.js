@@ -4,6 +4,7 @@ const path = require('path');
 const multer = require('multer');
 const session = require('express-session');
 const bcrypt = require('bcrypt');
+const excelJS = require('exceljs');
 const mysql = require('mysql2/promise'); // Usando mysql2
 const app = express();
 
@@ -243,111 +244,62 @@ app.get('/materias', async (req, res) => {
   res.json(rows);
 });
 
-// 🛠 Função para calcular a próxima data com base no dia da semana
-function obterProximaData(diaSemana) {
-  const diasMap = { "Segunda": 1, "Terça": 2, "Quarta": 3, "Quinta": 4, "Sexta": 5 };
-  let hoje = new Date();
-  let diaAtual = hoje.getDay();
-  let diasAFrente = (diasMap[diaSemana] - diaAtual + 7) % 7;
-  if (diasAFrente === 0) diasAFrente = 7;
-  let proximaData = new Date();
-  proximaData.setDate(hoje.getDate() + diasAFrente);
-  return proximaData.toISOString().split('T')[0];
-}
-
-// 🛠 Função para gerar horário automático baseado no turno
-async function gerarHorarioAutomaticoPorTurno(laboratorio, dataConclusao, turno) {
-  try {
-      const horariosTurno = {
-          "Matutino": { inicio: "08:00:00", limite: "12:00:00" },
-          "Vespertino": { inicio: "13:00:00", limite: "17:00:00" },
-          "Noturno": { inicio: "18:00:00", limite: "21:00:00" }
-      };
-
-      if (!horariosTurno[turno]) return "08:00:00";
-
-      const { inicio, limite } = horariosTurno[turno];
-
-      const [rows] = await pool.query(
-          "SELECT horario FROM aula WHERE laboratorio = ? AND dataConclusao = ? AND turno = ? ORDER BY horario DESC LIMIT 1",
-          [laboratorio, dataConclusao, turno]
-      );
-
-      if (rows.length > 0) {
-          let ultimoHorario = rows[0].horario;
-          let [hora, minuto, segundo] = ultimoHorario.split(':').map(Number);
-          hora += 2;
-          if (`${hora.toString().padStart(2, '0')}:00:00` > limite) return null;
-          return `${hora.toString().padStart(2, '0')}:${minuto.toString().padStart(2, '0')}:00`;
-      } else {
-          return inicio;
-      }
-  } catch (err) {
-      console.error("Erro ao gerar horário:", err);
-      return "08:00:00";
-  }
-}
-
-// 🛠 Rota para cadastrar aulas
+// Rota para cadastrar aulas
 app.post('/aulas', async (req, res) => {
-  try {
-      const { materia_id, turma, turno, laboratorio, diasSemana } = req.body;
-      if (!materia_id || !turma || !turno || !laboratorio || !diasSemana || diasSemana.length === 0) {
-          return res.status(400).json({ message: "Todos os campos são obrigatórios." });
-      }
-
-      const [rows] = await pool.query("SELECT ch FROM materia WHERE id = ?", [materia_id]);
-      if (rows.length === 0) return res.status(404).json({ message: "Matéria não encontrada." });
-
-      let cargaHorariaRestante = rows[0].ch;
-      let aulasCriadas = [];
-
-      if (cargaHorariaRestante <= 0) {
-          return res.status(400).json({ message: "A carga horária já foi preenchida!" });
-      }
-
-      while (cargaHorariaRestante > 0) {
-          for (let dia of diasSemana) {
-              if (cargaHorariaRestante <= 0) break;
-              let dataAula = obterProximaData(dia);
-              const horario = await gerarHorarioAutomaticoPorTurno(laboratorio, dataAula, turno);
-              if (!horario) return res.status(400).json({ message: `Sem horários disponíveis no turno ${turno}.` });
-
-              const [result] = await pool.query(
-                  "INSERT INTO aula (materia_id, turma, turno, laboratorio, horario, dataConclusao) VALUES (?, ?, ?, ?, ?, ?)",
-                  [materia_id, turma, turno, laboratorio, horario, dataAula]
-              );
-
-              aulasCriadas.push({ id: result.insertId, turma, turno, laboratorio, horario, dataConclusao: dataAula });
-              cargaHorariaRestante -= 2;
-          }
-      }
-
-      res.status(201).json({ message: "Aulas cadastradas com sucesso!", aulas: aulasCriadas });
-
-  } catch (err) {
-      console.error("Erro ao cadastrar aula:", err);
-      res.status(500).json({ message: "Erro no servidor." });
+  const { materia_id, turma, laboratorio, turno, diasSemana, horarios } = req.body;
+  
+  // Verifique se horarios não está undefined
+  console.log(horarios); // Isso deve ser um array de horários ou uma string
+  
+  if (!horarios || horarios.length === 0) {
+      return res.status(400).json({ error: "Horários não selecionados" });
   }
+
+  await pool.query("INSERT INTO aula (materia_id, turma, laboratorio, turno, diasSemana, horarios) VALUES (?, ?, ?, ?, ?, ?)",
+      [materia_id, turma, laboratorio, turno, diasSemana.join(', '), horarios.join(', ')]);
+  res.json({ message: "Aula cadastrada!" });
 });
 
-app.get('/aulas', async (req, res) => {
-  try {
-      const [rows] = await pool.query("SELECT id, turma AS title, dataConclusao AS start, horario FROM aula");
 
-      // Ajustar para o formato do FullCalendar
-      const aulasFormatadas = rows.map(aula => ({
-          id: aula.id,
-          title: `${aula.title} - ${aula.horario}`,
-          start: `${aula.start}T${aula.horario}`
-      }));
+app.get('/exportar-excel', async (req, res) => {
+  const [rows] = await pool.query("SELECT * FROM aula");
 
-      res.json(aulasFormatadas);
+  const workbook = new excelJS.Workbook();
+  const worksheet = workbook.addWorksheet('Aulas');
 
-  } catch (err) {
-      console.error("Erro ao buscar aulas:", err);
-      res.status(500).json({ message: "Erro ao buscar aulas" });
-  }
+  // Definindo os horários para os 24 horas do dia
+  const horariosDia = [
+    "00:00", "01:00", "02:00", "03:00", "04:00", "05:00", "06:00", "07:00",
+    "08:00", "09:00", "10:00", "11:00", "12:00", "13:00", "14:00", "15:00",
+    "16:00", "17:00", "18:00", "19:00", "20:00", "21:00", "22:00", "23:00"
+  ];
+
+  // Adicionando cabeçalhos, com a coluna de horários à esquerda
+  worksheet.addRow(["Horário", "Matéria", "Turma", "Laboratório", "Turno", "Dias"]);
+
+  // Preenchendo os horários na primeira coluna
+  horariosDia.forEach(horario => {
+    // Para cada horário, verificamos se existe alguma aula nesse horário
+    const aulaNoHorario = rows.filter(row => {
+      const horarios = row.horarios.split(', ').map(h => h.trim());
+      return horarios.includes(horario);
+    });
+
+    // Se houver aula, preenchemos a linha com as informações da aula
+    if (aulaNoHorario.length > 0) {
+      aulaNoHorario.forEach(aula => {
+        worksheet.addRow([horario, aula.materia_id, aula.turma, aula.laboratorio, aula.turno, aula.diasSemana]);
+      });
+    } else {
+      // Caso contrário, apenas preenchemos o horário com uma célula vazia
+      worksheet.addRow([horario, "", "", "", "", ""]);
+    }
+  });
+
+  res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+  res.setHeader('Content-Disposition', 'attachment; filename=Aulas.xlsx');
+  await workbook.xlsx.write(res);
+  res.end();
 });
 
 
