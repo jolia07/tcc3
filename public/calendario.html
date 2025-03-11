@@ -52,17 +52,11 @@
                 <input type="text" id="laboratorio" name="laboratorio" required><br><br>
 
                 <label for="turno">Turno:</label>
-                <select id="turno" name="turno" required onchange="atualizarHorarios()">
+                <select id="turno" name="turno" required>
                     <option value="">Selecione o Turno</option>
                     <option value="Matutino">Matutino</option>
                     <option value="Vespertino">Vespertino</option>
                     <option value="Noturno">Noturno</option>
-                </select><br><br>
-
-                <!-- Horários -->
-                <label for="horarios">Horários:</label>
-                <select id="horarios" name="horarios" required>
-                <option value="">Selecione o horário</option>
                 </select><br><br>
 
                 <label>Dias da Semana:</label><br>
@@ -72,12 +66,17 @@
                 <input type="checkbox" name="diasSemana" value="Quinta"> Quinta
                 <input type="checkbox" name="diasSemana" value="Sexta"> Sexta<br><br>
 
+                <label for="dataInicio">Data de Início:</label>
+                <input type="date" id="dataInicio" name="dataInicio" required>
+
                 <button type="submit">Salvar Aula</button>
             </form>
         </div>
     </div>
 
     <script>
+        
+
         async function carregarDadosUsuario() {
             try {
                 const response = await fetch('/getUserData');
@@ -91,7 +90,7 @@
                 } else {
                     document.getElementById('profilePic').src = '/img/default.png'; 
                 }
-            } catch (error) {
+                } catch (error) {
                 console.error('Erro ao carregar dados do usuário:', error);
                 alert('Erro ao carregar perfil.');
             }
@@ -103,33 +102,6 @@
             const select = document.getElementById('materia');
             select.innerHTML = materias.map(m => `<option value="${m.id}">${m.uc}</option>`).join('');
         }
-
-        function atualizarHorarios() {
-    const turno = document.getElementById('turno').value;
-    const horariosSelect = document.getElementById('horarios');
-    
-    // Limpar opções anteriores
-    horariosSelect.innerHTML = '<option value="">Selecione o horário</option>';
-
-    let horarios = [];
-
-    if (turno === 'Matutino') {
-        horarios = ['08:00', '09:00', '10:00', '11:00', '12:00']; // Exemplo de horários
-    } else if (turno === 'Vespertino') {
-        horarios = ['13:00', '14:00', '15:00', '16:00', '17:00']; // Exemplo de horários
-    } else if (turno === 'Noturno') {
-        horarios = ['18:00', '19:00', '20:00', '21:00', '22:00']; // Exemplo de horários
-    }
-
-    // Adicionar as opções ao select
-    horarios.forEach(horario => {
-        const option = document.createElement('option');
-        option.value = horario;
-        option.textContent = horario;
-        horariosSelect.appendChild(option);
-    });
-}
-
 
         document.getElementById('materiaForm').addEventListener('submit', async function(event) {
             event.preventDefault();
@@ -152,45 +124,35 @@
         });
 
         document.getElementById('aulaForm').addEventListener('submit', async function(event) {
-    event.preventDefault();
-    const diasSelecionados = Array.from(document.querySelectorAll('input[name="diasSemana"]:checked'))
-        .map(el => el.value);
+         event.preventDefault();
+         const diasSelecionados = Array.from(document.querySelectorAll('input[name="diasSemana"]:checked'))
+         .map(el => el.value);
+ 
+          if (diasSelecionados.length === 0) {
+          alert("Selecione pelo menos um dia da semana.");
+          return;
+          }
 
-    if (diasSelecionados.length === 0) {
-        alert("Selecione pelo menos um dia da semana.");
-        return;
-    }
+         const formData = {
+         materia_id: document.getElementById('materia').value,
+         turma: document.getElementById('turma').value,
+         laboratorio: document.getElementById('laboratorio').value,
+         turno: document.getElementById('turno').value,
+         diasSemana: diasSelecionados,
+         dataInicio: document.getElementById('dataInicio').value
+         };
 
-    // Pegando o horário selecionado
-    const horariosSelecionados = Array.from(document.querySelectorAll('select[name="horarios"] option:checked'))
-    .map(el => el.value); // Garantindo que múltiplos horários possam ser selecionados.
+         const response = await fetch('http://localhost:5505/aulas', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(formData)
+         });
 
-
-    if (horariosSelecionados.length === 0) {
-        alert("Selecione pelo menos um horário.");
-        return;
-    }
-
-    const formData = {
-        materia_id: document.getElementById('materia').value,
-        turma: document.getElementById('turma').value,
-        laboratorio: document.getElementById('laboratorio').value,
-        turno: document.getElementById('turno').value,
-        diasSemana: diasSelecionados,
-        horarios: horariosSelecionados
-    };
-
-    const response = await fetch('http://localhost:5505/aulas', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(formData)
-    });
-
-    if (response.ok) {
-        alert('Aula cadastrada!');
-        closeModal('modalAula');
-    }
-});
+         if (response.ok) {
+          alert('Aula cadastrada!');
+          closeModal('modalAula');
+         }
+        });
 
         function exportarParaExcel() {
             window.location.href = 'http://localhost:5505/exportar-excel';

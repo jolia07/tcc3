@@ -5,6 +5,7 @@ const multer = require('multer');
 const session = require('express-session');
 const bcrypt = require('bcrypt');
 const excelJS = require('exceljs');
+const moment = require('moment');
 const mysql = require('mysql2/promise'); // Usando mysql2
 const app = express();
 
@@ -246,58 +247,104 @@ app.get('/materias', async (req, res) => {
 
 // Rota para cadastrar aulas
 app.post('/aulas', async (req, res) => {
-  const { materia_id, turma, laboratorio, turno, diasSemana, horarios } = req.body;
-  
-  // Verifique se horarios não está undefined
-  console.log(horarios); // Isso deve ser um array de horários ou uma string
-  
-  if (!horarios || horarios.length === 0) {
-      return res.status(400).json({ error: "Horários não selecionados" });
-  }
-
-  await pool.query("INSERT INTO aula (materia_id, turma, laboratorio, turno, diasSemana, horarios) VALUES (?, ?, ?, ?, ?, ?)",
-      [materia_id, turma, laboratorio, turno, diasSemana.join(', '), horarios.join(', ')]);
+  const { materia_id, turma, laboratorio, turno, diasSemana, dataInicio } = req.body;
+  await pool.query("INSERT INTO aula (materia_id, turma, laboratorio, turno, diasSemana, dataInicio) VALUES (?, ?, ?, ?, ?, ?)", 
+      [materia_id, turma, laboratorio, turno, diasSemana.join(', '), dataInicio]);
   res.json({ message: "Aula cadastrada!" });
 });
 
-
 app.get('/exportar-excel', async (req, res) => {
-  const [rows] = await pool.query("SELECT * FROM aula");
-
+  const [rows] = await pool.query(`
+    SELECT a.*, m.uc AS nomeMateria
+    FROM aula a
+    JOIN materia m ON a.materia_id = m.id
+`);
+  
   const workbook = new excelJS.Workbook();
-  const worksheet = workbook.addWorksheet('Aulas');
+  const worksheet = workbook.addWorksheet('Horários de Aulas');
 
-  // Definindo os horários para os 24 horas do dia
-  const horariosDia = [
-    "00:00", "01:00", "02:00", "03:00", "04:00", "05:00", "06:00", "07:00",
-    "08:00", "09:00", "10:00", "11:00", "12:00", "13:00", "14:00", "15:00",
-    "16:00", "17:00", "18:00", "19:00", "20:00", "21:00", "22:00", "23:00"
-  ];
+  // Cabeçalho da planilha
+  const diasSemana = ["Segunda", "Terça", "Quarta", "Quinta", "Sexta"];
+  const horariosPadrao = ["08:00", "09:00", "10:00", "11:00", "12:00", 
+                          "13:00", "14:00", "15:00", "16:00", "17:00", 
+                          "18:00", "19:00", "20:00", "21:00"];
 
-  // Adicionando cabeçalhos, com a coluna de horários à esquerda
-  worksheet.addRow(["Horário", "Matéria", "Turma", "Laboratório", "Turno", "Dias"]);
+  let currentMonth = null;  // Variável para armazenar o mês atual
 
-  // Preenchendo os horários na primeira coluna
-  horariosDia.forEach(horario => {
-    // Para cada horário, verificamos se existe alguma aula nesse horário
-    const aulaNoHorario = rows.filter(row => {
-      const horarios = row.horarios.split(', ').map(h => h.trim());
-      return horarios.includes(horario);
-    });
+  // Preencher os horários para cada aula cadastrada
+  rows.forEach(async row => {
+      const dataInicio = moment(row.dataInicio);  // Data de início da aula
+      const mesAno = dataInicio.format('MMMM YYYY');
 
-    // Se houver aula, preenchemos a linha com as informações da aula
-    if (aulaNoHorario.length > 0) {
-      aulaNoHorario.forEach(aula => {
-        worksheet.addRow([horario, aula.materia_id, aula.turma, aula.laboratorio, aula.turno, aula.diasSemana]);
+      // Verifica se o mês é diferente do anterior, para não adicionar o título do mês novamente
+      if (mesAno !== currentMonth) {
+          worksheet.addRow([`Mês: ${mesAno}`, ...diasSemana]);  // Adiciona título do mês
+          currentMonth = mesAno;  // Atualiza o mês atual
+      }
+
+      // Criar calendário para o mês
+      let dataAtual = moment(dataInicio);  // Início do mês da dataInicio
+      const semanas = [];
+
+      // Criando as semanas para o mês
+      for (let semana = 1; semana <= 5; semana++) {
+          let semanaAtual = [];
+          diasSemana.forEach(dia => {
+              if (dataAtual.month() === dataInicio.month()) {
+                  semanaAtual.push(dataAtual.format('DD/MM'));  // Exemplo: 01/08, 02/08, ...
+              } else {
+                  semanaAtual.push('');  // Deixe em branco após o final do mês
+              }
+              dataAtual.add(1, 'days');  // Avança para o próximo dia
+          });
+          semanas.push(semanaAtual);  // Adiciona a semana ao calendário
+      }
+
+      // Adicionando as semanas à planilha
+      semanas.forEach(semana => {
+          worksheet.addRow([`Semana`, ...semana]);
       });
-    } else {
-      // Caso contrário, apenas preenchemos o horário com uma célula vazia
-      worksheet.addRow([horario, "", "", "", "", ""]);
-    }
+
+      // Adicionar horários
+      horariosPadrao.forEach(horario => {
+          let row = [horario];
+          diasSemana.forEach(dia => {
+              row.push(''); 
+          });
+          worksheet.addRow(row);  // Adiciona os horários
+      });
+
+      // Preencher os horários conforme os dados cadastrados
+      const dias = row.diasSemana ? row.diasSemana.split(', ').map(d => d.trim()) : [];
+      let horarios = [];
+
+      // Definir os horários com base no turno
+      if (row.turno === "Matutino") horarios = ["08:00", "09:00", "10:00", "11:00", "12:00"];
+      else if (row.turno === "Vespertino") horarios = ["13:00", "14:00", "15:00", "16:00", "17:00"];
+      else if (row.turno === "Noturno") horarios = ["18:00", "19:00", "20:00", "21:00"];
+
+      const nomeMateria = row.nomeMateria;  // Nome da matéria obtido diretamente do JOIN
+
+      // Alocar a matéria nos horários e dias correspondentes
+      horarios.forEach(horario => {
+          dias.forEach(dia => {
+              // Mapeamento de dias da semana para números de colunas (1 = "Segunda", 2 = "Terça", etc)
+              const colIndex = diasSemana.indexOf(dia) + 2;  // Começa em 2 para a coluna B
+              worksheet.eachRow({ includeEmpty: true }, (cell, rowIndex) => {
+                  // Encontrar a célula correspondente ao dia e horário
+                  if (worksheet.getRow(rowIndex).getCell(1).value === horario) {
+                      worksheet.getRow(rowIndex).getCell(colIndex).value = nomeMateria; // Preenche com o nome da matéria
+                  }
+              });
+          });
+      });
   });
 
+  // Configurar cabeçalho do arquivo Excel
   res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
-  res.setHeader('Content-Disposition', 'attachment; filename=Aulas.xlsx');
+  res.setHeader('Content-Disposition', 'attachment; filename=Horario_Aulas.xlsx');
+
+  // Escrever e enviar o arquivo
   await workbook.xlsx.write(res);
   res.end();
 });

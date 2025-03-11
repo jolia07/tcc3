@@ -35,7 +35,7 @@ pool.query(`
       senha VARCHAR(255) NOT NULL,
       telefone VARCHAR(20) NOT NULL,
       profilePic VARCHAR(255),
-      tipo ENUM('docente', 'adm') NOT NULL
+      tipo ENUM('docente', 'adm', 'aluno') NOT NULL
   );
 `).then(() => {
   console.log("Tabela 'usuarios' pronta!");
@@ -49,7 +49,7 @@ pool.query(`
       turno varchar(255) not null,
       laboratorio VARCHAR(255) NOT NULL,
       turma VARCHAR(255) UNIQUE NOT NULL,
-      horarios varchar(255) not null,
+      dataInicio varchar(255) not null,
       diasSemana varchar(255) NOT NULL,
       materia_id int,
       foreign key (materia_id) references materia(id) on delete cascade
