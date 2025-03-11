@@ -254,97 +254,145 @@ app.post('/aulas', async (req, res) => {
 });
 
 app.get('/exportar-excel', async (req, res) => {
-  const [rows] = await pool.query(`
-    SELECT a.*, m.uc AS nomeMateria
-    FROM aula a
-    JOIN materia m ON a.materia_id = m.id
-`);
-  
+  const [rows] = await pool.query("SELECT * FROM aula");
+
   const workbook = new excelJS.Workbook();
-  const worksheet = workbook.addWorksheet('Horários de Aulas');
+  const worksheet = workbook.addWorksheet('Aulas');
 
-  // Cabeçalho da planilha
-  const diasSemana = ["Segunda", "Terça", "Quarta", "Quinta", "Sexta"];
-  const horariosPadrao = ["08:00", "09:00", "10:00", "11:00", "12:00", 
-                          "13:00", "14:00", "15:00", "16:00", "17:00", 
-                          "18:00", "19:00", "20:00", "21:00"];
+  const horariosDia = [
+    "07:00", "08:00", "09:00", "10:00", "11:00", "12:00", "13:00", "14:00", 
+    "15:00", "16:00", "17:00", "18:00", "19:00", "20:00", "21:00", "22:00",
+  ];
 
-  let currentMonth = null;  // Variável para armazenar o mês atual
+  // Linha 1 - Cabeçalhos Mesclados e Personalizados
+  worksheet.mergeCells('B1:F1'); // Mescla "Dados do Docente/Administrador"
+  worksheet.mergeCells('B2:F2'); //Mescla "Docente"
+  worksheet.mergeCells('B3:F3'); //Mescla "Email"
+  worksheet.mergeCells('B4:F4'); //Mescla "Tel1.:"
+  worksheet.mergeCells('B5:F5'); //Mescla "Tel2.:"
 
-  // Preencher os horários para cada aula cadastrada
-  rows.forEach(async row => {
-      const dataInicio = moment(row.dataInicio);  // Data de início da aula
-      const mesAno = dataInicio.format('MMMM YYYY');
+  worksheet.mergeCells('T1:T6'); // Mescla COLUNA pras fazer uma divisão
+  worksheet.mergeCells('A6:S6'); // Mescla LINHAS pras fazer uma divisão
 
-      // Verifica se o mês é diferente do anterior, para não adicionar o título do mês novamente
-      if (mesAno !== currentMonth) {
-          worksheet.addRow([`Mês: ${mesAno}`, ...diasSemana]);  // Adiciona título do mês
-          currentMonth = mesAno;  // Atualiza o mês atual
-      }
+  worksheet.mergeCells('A9:H9');
 
-      // Criar calendário para o mês
-      let dataAtual = moment(dataInicio);  // Início do mês da dataInicio
-      const semanas = [];
 
-      // Criando as semanas para o mês
-      for (let semana = 1; semana <= 5; semana++) {
-          let semanaAtual = [];
-          diasSemana.forEach(dia => {
-              if (dataAtual.month() === dataInicio.month()) {
-                  semanaAtual.push(dataAtual.format('DD/MM'));  // Exemplo: 01/08, 02/08, ...
-              } else {
-                  semanaAtual.push('');  // Deixe em branco após o final do mês
-              }
-              dataAtual.add(1, 'days');  // Avança para o próximo dia
-          });
-          semanas.push(semanaAtual);  // Adiciona a semana ao calendário
-      }
+  worksheet.getCell('B1').value = "Dados do Docente";
+  worksheet.getCell('A9').value = "Janeiro";
+  
+  worksheet.getCell('B1').alignment = { horizontal: 'center', vertical: 'middle' };
+  worksheet.getCell('A9').alignment = { horizontal: 'center', vertical: 'middle' };
 
-      // Adicionando as semanas à planilha
-      semanas.forEach(semana => {
-          worksheet.addRow([`Semana`, ...semana]);
-      });
-
-      // Adicionar horários
-      horariosPadrao.forEach(horario => {
-          let row = [horario];
-          diasSemana.forEach(dia => {
-              row.push(''); 
-          });
-          worksheet.addRow(row);  // Adiciona os horários
-      });
-
-      // Preencher os horários conforme os dados cadastrados
-      const dias = row.diasSemana ? row.diasSemana.split(', ').map(d => d.trim()) : [];
-      let horarios = [];
-
-      // Definir os horários com base no turno
-      if (row.turno === "Matutino") horarios = ["08:00", "09:00", "10:00", "11:00", "12:00"];
-      else if (row.turno === "Vespertino") horarios = ["13:00", "14:00", "15:00", "16:00", "17:00"];
-      else if (row.turno === "Noturno") horarios = ["18:00", "19:00", "20:00", "21:00"];
-
-      const nomeMateria = row.nomeMateria;  // Nome da matéria obtido diretamente do JOIN
-
-      // Alocar a matéria nos horários e dias correspondentes
-      horarios.forEach(horario => {
-          dias.forEach(dia => {
-              // Mapeamento de dias da semana para números de colunas (1 = "Segunda", 2 = "Terça", etc)
-              const colIndex = diasSemana.indexOf(dia) + 2;  // Começa em 2 para a coluna B
-              worksheet.eachRow({ includeEmpty: true }, (cell, rowIndex) => {
-                  // Encontrar a célula correspondente ao dia e horário
-                  if (worksheet.getRow(rowIndex).getCell(1).value === horario) {
-                      worksheet.getRow(rowIndex).getCell(colIndex).value = nomeMateria; // Preenche com o nome da matéria
-                  }
-              });
-          });
-      });
+  const meses = ["JAN", "FEV", "MAR", "ABR", "MAI", "JUN", "JUL", "AGO", "SET", "OUT", "NOV", "DEZ"];
+  meses.forEach((mes, index) => {
+    worksheet.getCell(1, index + 8).value = mes;
   });
 
-  // Configurar cabeçalho do arquivo Excel
-  res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
-  res.setHeader('Content-Disposition', 'attachment; filename=Horario_Aulas.xlsx');
+  // Aplicando cor de fundo para toda a linha 1
+  worksheet.getRow(1).eachCell((cell) => {
+    cell.fill = {
+      type: 'pattern',
+      pattern: 'solid',
+      fgColor: { argb: 'FF4682B4' } 
+    };
+    cell.font = {
+      bold: true,
+      color: { argb: 'FFFFFFFF' } 
+    };
+  });
+ 
 
-  // Escrever e enviar o arquivo
+  worksheet.getCell('A2').value = "Docente:";
+  worksheet.getCell('A3').value = "E-mail:";
+  worksheet.getCell('A4').value = "Tel.1:";
+  worksheet.getCell('A5').value = "Tel.2:";
+
+  worksheet.getCell('G2').value = "Dias Úteis:";
+  worksheet.getCell('G3').value = "Horas Úteis:";
+  worksheet.getCell('G4').value = "Horas Alocadas:";
+
+  ["A1","G1", "T1", "H6", "A2", "A3", "A4", "A5", "G1", "G2", "G3", "G4", "G5"].forEach(cellAddress => {
+    const cell = worksheet.getCell(cellAddress);
+    cell.fill = {
+      type: 'pattern',
+      pattern: 'solid',
+      fgColor: { argb: 'FF4682B4' }
+    };
+    cell.font = {
+      bold: true,
+      color: { argb: 'FFFFFFFF' }
+    };
+  });
+
+  ["A9"].forEach(cellAddress => {
+    const cell = worksheet.getCell(cellAddress);
+    cell.fill = {
+      type: 'pattern',
+      pattern: 'solid',
+      fgColor: { argb: 'FF3465a4' }
+    };
+    cell.font = {
+      bold: true,
+      color: { argb: 'FFFFFFFF' }
+    };
+  });
+
+  const janeiro = worksheet.addRow(["","Domingo", "Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado"]);
+  janeiro.eachCell((cell) => {
+    cell.fill = {
+      type: 'pattern',
+      pattern: 'solid',
+      fgColor: { argb: 'FF4682B4' }
+    };
+    cell.font = {
+      bold: true,
+      color: { argb: 'FFFFFFFF' }
+    };
+  });
+
+  // Cabeçalho da tabela (sem a coluna "Dias")
+  const tableHeaderRow = worksheet.addRow(["Horário"]);
+
+  tableHeaderRow.eachCell((cell) => {
+    cell.fill = {
+      type: 'pattern',
+      pattern: 'solid',
+      fgColor: { argb: 'FF4682B4' }
+    };
+    cell.font = {
+      bold: true,
+      color: { argb: 'FFFFFFFF' }
+    };
+  });
+
+  // Preenchendo os horários e dados
+  horariosDia.forEach(horario => {
+    const aulaNoHorario = rows.filter(row => {
+      const horarios = row.horarios.split(', ').map(h => h.trim());
+      return horarios.includes(horario);
+    });
+
+    if (aulaNoHorario.length > 0) {
+      aulaNoHorario.forEach(aula => {
+        worksheet.addRow([horario, aula.materia_id, aula.turma, aula.laboratorio, aula.turno]);
+      });
+    } else {
+      worksheet.addRow([horario, "", "", "", ""]);
+    }
+  });
+
+  // Ajustar automaticamente a largura das colunas
+  worksheet.columns.forEach((column) => {
+    let maxLength = 0;
+    column.eachCell({ includeEmpty: true }, (cell) => {
+      const cellValue = cell.value ? cell.value.toString() : "";
+      maxLength = Math.max(maxLength, cellValue.length);
+    });
+    column.width = maxLength + 5;
+  });
+
+  res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+  res.setHeader('Content-Disposition', 'attachment; filename=Aulas.xlsx');
   await workbook.xlsx.write(res);
   res.end();
 });
