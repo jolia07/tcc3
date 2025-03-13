@@ -9,32 +9,44 @@
     font-size: 1.1em;
     color: white;
     font-weight: 500;
-    margin-left: 1350px;
+    margin-left: 1350px; /* 40px? */
     transition: .5s;
 }
+
+
+/* .input-box {
+    position: relative;
+    width: 100%;
+    height: 50px;
+    border-bottom: 2px solid #162938;
+    margin: 30px 0;
+} */
+
 
 .navigation .btnLogin-popup:hover {
     background: white;
     color: #162938;
 }
 
+
 .wrapper {
-    position: fixed;
+    position: fixed; /* relative? */
     width: 400px;
     height: auto;
-    max-height: 600px; 
+    max-height: 600px;
     background: transparent;
     border: 2px solid rgba(255, 255, 255, .5);
     border-radius: 20px;
     backdrop-filter: blur(20px);
     box-shadow: 0 0 30px rgba(0, 0, 0, .5);
-    display: none; 
+    display: none;
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%);
     z-index: 1000;
-    overflow: hidden; 
+    overflow: hidden;
 }
+
 
 .overlay {
     display: none;
@@ -45,31 +57,39 @@
     height: 100%;
     background: rgba(0, 0, 0, 0.7);
     z-index: 999;
+    /* justify-content: center;
+    align-items: center */
 }
+
 
 .show {
     display: flex;
 }
 
+
 .show .overlay {
+    display: block; /* flex?*/
+}
+
+
+.form-box {
+    display: none;
+    width: 100%;
+    height: auto;
+    padding: 40px;
+    box-sizing: border-box;
+}
+
+
+.form-box.login {
     display: block;
 }
 
-.form-box {
-    display: none; 
-    width: 100%;
-    height: auto; 
-    padding: 40px;
-    box-sizing: border-box; 
-}
-
-.form-box.login {
-    display: block; 
-}
 
 .form-box.register {
-    transition: all 0.3s ease; 
+    transition: all 0.3s ease;
 }
+
 
 .opcoes-conta {
     width: 100%;
@@ -87,11 +107,13 @@
     appearance: none; /* Remove o estilo padrão do select */
 }
 
+
 /* Estilo quando o select é focado */
 .opcoes-conta:focus {
     background: rgba(255, 255, 255, 0.2);
     border-color: #4682B4;
 }
+
 
 /* Cor do texto das opções */
 .opcoes-conta option {
@@ -101,14 +123,14 @@
     padding: 10px;
 }
 
-/* Quando o mouse passa por cima, adiciona opacidade */
+/* OPacidade */
 .opcoes-conta:hover {
     background: rgba(255, 255, 255, 0.8); /* Reduz um pouco a intensidade do branco */
     color: #162938;
     opacity: 0.8;
 }
 
-/* Adicionando uma seta personalizada */
+/* Seta personalizada */
 .opcoes-conta::-ms-expand {
     display: none;
 }
@@ -123,7 +145,6 @@
     color: white;
     pointer-events: none;
 }
-
 
 
 .wrapper.active-popup {
@@ -155,7 +176,7 @@
     display: none;
     position: absolute;
     top: 0;
-    left: 0; 
+    left: 0;
     width: 45px;
     height: 45px;
     background: #4682B4;
@@ -164,12 +185,11 @@
     display: flex;
     justify-content: center;
     align-items: center;
-    border-bottom-right-radius: 20px; 
-    border-bottom-left-radius: 0; 
+    border-bottom-right-radius: 20px;
+    border-bottom-left-radius: 0;
     cursor: pointer;
     z-index: 1;
 }
-
 
 .form-box h2 {
     font-size: 2em;
@@ -281,29 +301,30 @@
 }
 
 .wrapper.show {
-    display: flex; 
+    display: flex;
 }
+
 
 /*Check box ---------------------*/
 
 .verSenha {
-    appearance: none; 
+    appearance: none;
     width: 15px;
     height: 15px;
-    border-radius: 50%; 
-    background-color: white; 
-    transition: background-color 0.3s ease, transform 0.2s ease; 
+    border-radius: 50%;
+    background-color: white;
+    transition: background-color 0.3s ease, transform 0.2s ease;
     display: inline-block;
     cursor: pointer;
     position: relative;
 }
 
 .verSenha:checked {
-    background-color: #4682B4; 
-    border: 1px solid white; 
-    transform: scale(1.1); 
+    background-color: #4682B4;
+    border: 1px solid white;
+    transform: scale(1.1);
 }
 
 .verSenha:active {
-    transform: scale(0.9); 
+    transform: scale(0.9);
 }

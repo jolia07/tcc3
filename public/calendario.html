@@ -15,9 +15,12 @@
         </div>
     </div>
 
-    <button onclick="openModal('modalMateria')">Cadastrar Matéria</button>
-    <button onclick="openModal('modalAula')">Cadastrar Aula</button>
+    <button id="btnCadastrarMateria" onclick="openModal('modalMateria')">Cadastrar Matéria</button>
+    <button id="btnCadastrarAula" onclick="openModal('modalAula')">Cadastrar Aula</button>
     <button onclick="exportarParaExcel()">Exportar para Excel</button>
+    <button onclick="mostrarAulas()">Mostrar Aulas</button>
+    <button id="btnPerfil">Acessar Perfil</button>
+    <button onclick="sair()">Sair</button>
 
     <!-- Modal de Cadastro de Matérias -->
     <div id="modalMateria" class="modal">
@@ -90,6 +93,11 @@
                 } else {
                     document.getElementById('profilePic').src = '/img/default.png'; 
                 }
+                //Verifica o tipo de usuário
+                const btnCadastrarMateria = document.getElementById('btnCadastrarMateria');
+                  if (data.tipo !== 'adm') {
+                    btnCadastrarMateria.style.display = 'none'; // Esconder o botão para usuários não administradores
+                }
                 } catch (error) {
                 console.error('Erro ao carregar dados do usuário:', error);
                 alert('Erro ao carregar perfil.');
@@ -154,15 +162,54 @@
          }
         });
 
+        document.getElementById('btnPerfil').addEventListener('click', async () => {
+         try {
+          const response = await fetch('/getUserData'); // Rota que retorna os dados do usuário logado
+          const data = await response.json();
+
+          if (response.ok) {
+            window.location.href = `/perfil.html?id=${data.id}`; // Redireciona com o ID do usuário
+          } else {
+            alert('Você precisa estar logado para acessar o perfil!');
+          }
+            } catch (error) {
+             console.error('Erro ao obter sessão do usuário:', error);
+            }
+        });
+
         function exportarParaExcel() {
             window.location.href = 'http://localhost:5505/exportar-excel';
         }
 
+        function sair() {
+        if (confirm("Você tem certeza que deseja sair?")) {
+            fetch('http://localhost:5505/', { method: 'POST' })
+                .then(() => {
+                    window.location.href = 'home.html';
+                })
+                .catch(error => {
+                    console.error('Erro ao sair:', error);
+                    alert('Erro ao fazer logout.');
+                });
+        }}
+
         function openModal(id) { document.getElementById(id).style.display = 'block'; }
         function closeModal(id) { document.getElementById(id).style.display = 'none'; }
 
+        async function mostrarAulas() {
+          try {
+          const response = await fetch('http://localhost:3000/mostrarAulas'); // Substitua pela URL do backend
+          const dados = await response.json();
+          console.log(dados); // Aqui você pode exibir os dados no console ou manipular no frontend
+          } catch (error) {
+            console.error("Erro ao carregar aulas:", error);
+          }
+        }
+
         carregarMaterias();
         carregarDadosUsuario(); 
+        mostrarAulas();
+        
     </script>
 
 </body>

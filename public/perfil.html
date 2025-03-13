@@ -39,6 +39,10 @@
                     <span id="userEmail">Não informado</span>
                 </div>
                 <div class="info-item">
+                    <label>Telefone:</label>
+                    <span id="userTelefone">Não informado</span>
+                </div>
+                <div class="info-item">
                     <label>Tipo:</label>
                     <span id="userRole">Não informado</span>
                 </div>
@@ -81,6 +85,7 @@
                 // Atualizar informações
                 document.getElementById('userName').textContent = data.nome || 'Não informado';
                 document.getElementById('userEmail').textContent = data.email || 'Não informado';
+                document.getElementById('userTelefone').textContent = data.telefone || 'Não informado';
                 document.getElementById('userRole').textContent = data.tipo || 'Não informado';
                 
                 // Atualizar foto

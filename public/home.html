@@ -8,138 +8,354 @@
     <link rel="stylesheet" href="login.css">
     <link rel="stylesheet" href="style.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css">
+    <link rel="icon" type="image/png" href="images/icons/favicon.ico"/>
+    <link rel="stylesheet" type="text/css" href="vendor/bootstrap/css/bootstrap.min.css">
+    <link rel="stylesheet" type="text/css" href="fonts/font-awesome-4.7.0/css/font-awesome.min.css">
+    <link rel="stylesheet" type="text/css" href="vendor/animate/animate.css">
+    <link rel="stylesheet" type="text/css" href="vendor/css-hamburgers/hamburgers.min.css">
+    <link rel="stylesheet" type="text/css" href="vendor/select2/select2.min.css">
+    <link rel="stylesheet" type="text/css" href="css/util.css">
+    <link rel="stylesheet" type="text/css" href="css/main.css">
+   
     <title>SEPA</title>
 </head>
 <body>
     <header>
         <nav class="navigation">
             <img class="logo" src="/img/senailogo_nova.png">
-            <button class="btnLogin-popup">Login</button>
         </nav>
     </header>
-
-    <!--login-->
-    <div class="overlay">
-      <div class="wrapper">
-        <span class="icon-close">
-            <ion-icon name="close"></ion-icon>
-        </span>
-        <span class="icon-back">
-            <i class="bi bi-arrow-left"></i>
-        </span>
-
-        <div class="form-box login">
-            <h2>Login</h2>
-            <form action="#"> 
-                <div class="input-box">
-                    <span class="icon"><ion-icon name="mail"></ion-icon></span>
-                    <input type="email" required>
-                    <label>Email</label>
+    <div class="limiter">
+        <div class="container-login100">
+            <div class="wrap-login100">
+                <div class="login100-pic js-tilt" data-tilt>
+                    <img src="images/img-01.png" alt="IMG">
+                </div>
+                <span class="sepa-title">SEPA</span>
+         <!-- Formulário de Login -->
+         <form class="login100-form validate-form" id="loginForm">
+            <span class="login100-form-title">
+                Login
+            </span>
+                <div class="wrap-input100 validate-input" data-validate="Email é obrigatório: ex@abc.xyz">
+                    <input class="input100" type="text" name="email" id="email" placeholder="Email">
+                    <span class="focus-input100"></span>
+                    <span class="symbol-input100">
+                        <i class="fa fa-envelope" aria-hidden="true"></i>
+                    </span>
                 </div>
 
-                <div class="input-box">
-                    <span class="icon"><ion-icon name="lock"></ion-icon></span>
-                    <input type="password" class="input-senha" required>
-                    <label>Senha</label>
+
+                <div class="wrap-input100 validate-input" data-validate="Senha é obrigatória">
+                    <input class="input100 input-senha" type="password" name="senha" id="password" placeholder="Senha">
+                    <span class="focus-input100"></span>
+                    <span class="symbol-input100">
+                        <i class="fa fa-lock" aria-hidden="true"></i>
+                    </span>
                 </div>
+                <!-- Opção para mostrar a senha -->
                 <div class="lembrar-esquecer">
-                    <label><input type="checkbox" class="verSenha">Mostrar senha</label>
-                    <a href="#" class="update-link">Esqueceu sua senha?</a>
+                    <label><input type="checkbox" class="verSenha"> Mostrar senha</label>
                 </div>
-                <button type="submit" class="btn">Login</button>
-                <div class="login-register">
-                    <p>Não tem uma conta?
-                    <a href="#" class="register-link">Cadastrar-me</a>
-                    </p>
+
+
+                <div class="container-login100-form-btn">
+                    <button class="login100-form-btn" type="submit">
+                        Entrar
+                    </button>
+                </div>
+           
+                <div class="text-center p-t-12">
+                    <span class="txt1">
+                        Esqueceu
+                    </span>
+                    <a class="txt2" href="#" onclick="showForgotPassword()">
+                        Email / Senha?
+                    </a>
+                </div>
+           
+                <div class="text-center p-t-136">
+                    <a class="txt2" href="#" onclick="showRegister()">
+                        Criar sua Conta
+                        <i class="fa fa-long-arrow-right m-l-5" aria-hidden="true"></i>
+                    </a>
                 </div>
             </form>
-        </div>
-
-        <div class="form-box register">
-            <h2>Cadastro</h2>
-            <form action="#">
-                <div class="input-box">
-                    <span class="icon"><ion-icon name="people"></ion-icon></span>
-                    <select id="tipo" class="opcoes-conta" required>
+            <!-- Formulário de Cadastro -->
+            <form class="login100-form validate-form" id="registerForm" style="display: none;">
+                <span class="login100-form-title">
+                    Cadastro
+                </span>
+           
+                <!-- Select para escolher tipo de usuário -->
+                <div class="wrap-input100 validate-input" data-validate="Tipo de conta é obrigatório">
+                    <select class="input100" id="tipo" name="tipo" required>
                         <option value="" disabled selected>Selecione o tipo</option>
                         <option value="docente">Docente</option>
                         <option value="adm">Administrador</option>
+                        <option values="aluno">Aluno</option>
                     </select>
-                </div> 
-                               
-                <div class="input-box">
-                    <span class="icon"><ion-icon name="person"></ion-icon></span>
-                    <input type="text" required>
-                    <label>Nome</label>
+                    <span class="focus-input100"></span>
+                    <span class="symbol-input100">
+                        <i class="fa fa-users" aria-hidden="true"></i>
+                    </span>
+                </div>
+           
+                <div class="wrap-input100 validate-input" data-validate="Nome é obrigatório">
+                    <input class="input100" type="text" name="nome" id="name" placeholder="Nome" required>
+                    <span class="focus-input100"></span>
+                    <span class="symbol-input100">
+                        <i class="fa fa-user" aria-hidden="true"></i>
+                    </span>
+                </div>
+           
+                <div class="wrap-input100 validate-input" data-validate="Email é obrigatório: ex@abc.xyz">
+                    <input class="input100" type="email" name="email" id="register-email" placeholder="Email" required>
+                    <span class="focus-input100"></span>
+                    <span class="symbol-input100">
+                        <i class="fa fa-envelope" aria-hidden="true"></i>
+                    </span>
                 </div>
 
-                <div class="input-box">
-                    <span class="icon"><ion-icon name="mail"></ion-icon></span>
-                    <input type="email" required>
-                    <label>Email</label>
+                <div class="wrap-input100 validate-input" data-validate="Telefone é obrigatório">
+                    <input class="input100 input-telefone" type="text" name="telefone" id="register-text" placeholder="Telefone" required>
+                    <span class="focus-input100"></span>
+                    <span class="symbol-input100">
+                        <i class="fa fa-lock" aria-hidden="true"></i>
+                    </span>
                 </div>
-
-                <div class="input-box">
-                    <span class="icon"><ion-icon name="lock"></ion-icon></span>
-                    <input type="password" class="input-senha" required>
-                    <label>Senha</label>
+           
+                <div class="wrap-input100 validate-input" data-validate="Senha é obrigatória">
+                    <input class="input100 input-senha" type="password" name="senha" id="register-password" placeholder="Senha" required>
+                    <span class="focus-input100"></span>
+                    <span class="symbol-input100">
+                        <i class="fa fa-lock" aria-hidden="true"></i>
+                    </span>
                 </div>
+           
+                <!-- Opção para mostrar a senha -->
                 <div class="lembrar-esquecer">
-                    <label><input type="checkbox" class="verSenha">Mostrar senha</label>
+                    <label><input type="checkbox" class="verSenha"> Mostrar senha</label>
                 </div>
-                <button type="submit" class="btn">Cadastrar</button>
-                <div class="login-register">
-                    <p>Já tem uma conta?
-                    <a href="#" class="login-link">Login</a>
-                    </p>
+           
+                <div class="container-login100-form-btn">
+                    <button class="login100-form-btn" type="submit">
+                        Cadastrar
+                    </button>
+                </div>
+           
+                <div class="text-center p-t-12">
+                    <span class="txt1">
+                        Já tem uma conta?
+                    </span>
+                    <a class="txt2" href="#" onclick="showLogin()">
+                        Faça login
+                    </a>
+                </div>
+            </form>
+
+
+             <!-- Formulário de Recuperação de Senha -->
+             <form class="login100-form validate-form" id="forgotPasswordForm" style="display: none;">
+                <span class="login100-form-title">
+                    Recuperar Senha
+                </span>
+
+
+                <div class="wrap-input100 validate-input" data-validate="Email é obrigatório: ex@abc.xyz">
+                    <input class="input100" type="text" name="email" id="forgot-email" placeholder="Email">
+                    <span class="focus-input100"></span>
+                    <span class="symbol-input100">
+                        <i class="fa fa-envelope" aria-hidden="true"></i>
+                    </span>
+                </div>
+                <div class="wrap-input100 validate-input" data-validate="Senha é obrigatória">
+                    <input class="input100 input-senha" type="password" name="senha" id="newPassword" placeholder="Nova Senha" required>
+                    <span class="focus-input100"></span>
+                    <span class="symbol-input100">
+                        <i class="fa fa-lock" aria-hidden="true"></i>
+                    </span>
+                </div>
+                <div class="wrap-input100 validate-input" data-validate="Senha é obrigatória">
+                    <input class="input100 input-senha" type="password" name="senha" id="confirmPassword" placeholder="Confirmar Nova Senha" required>
+                    <span class="focus-input100"></span>
+                    <span class="symbol-input100">
+                        <i class="fa fa-lock" aria-hidden="true"></i>
+                    </span>
+                </div>
+
+                <div class="lembrar-esquecer">
+                    <label><input type="checkbox" class="verSenha"> Mostrar senha</label>
+                </div>
+
+               
+                <div class="container-login100-form-btn">
+                    <button class="login100-form-btn btn" type="submit">
+                        Recuperar Senha
+                    </button>
+                </div>
+
+
+                <div class="text-center p-t-12">
+                    <span class="txt1">
+                        Lembrou da senha?
+                    </span>
+                    <a class="txt2" href="#" onclick="showLogin()">
+                        Faça login
+                    </a>
                 </div>
             </form>
         </div>
-
-        <div class="form-box update">
-            <h2>Atualizar senha</h2>
-            <form id="updatePasswordForm">
-                <div class="input-box">
-                    <span class="icon"><ion-icon name="mail"></ion-icon></span>
-                    <input type="email" id="updateEmail" required>
-                    <label>Email</label>
-                </div>
-        
-                <div class="input-box">
-                    <span class="icon"><ion-icon name="lock"></ion-icon></span>
-                    <input type="password" id="newPassword" class="input-senha" required>
-                    <label>Nova Senha</label>
-                </div>
-        
-                <div class="input-box">
-                    <span class="icon"><ion-icon name="lock"></ion-icon></span>
-                    <input type="password" id="confirmPassword" class="input-senha" required>
-                    <label>Confirmar Nova Senha</label>
-                </div>
-
-                <div class="lembrar-esquecer">
-                    <label><input type="checkbox" class="verSenha">Mostrar senha</label>
-                </div>
-
-                <button type="submit" class="btn">Atualizar Senha</button>
-            </form>
-        </div>        
-
-      </div>
     </div>
+</div>
 
-    <script src="https://unpkg.com/ionicons@4.5.10-0/dist/ionicons.js"></script>
-    <script src="login.js"></script>
+
+<script src="vendor/jquery/jquery-3.2.1.min.js"></script>
+<script src="vendor/bootstrap/js/popper.js"></script>
+<script src="vendor/bootstrap/js/bootstrap.min.js"></script>
+<script src="vendor/select2/select2.min.js"></script>
+<script src="vendor/tilt/tilt.jquery.min.js"></script>
+<script src="https://unpkg.com/ionicons@4.5.10-0/dist/ionicons.js"></script>
+<script src="login.js"></script>
 </body>
-
 <!--Login-->
     <script>
+$('.js-tilt').tilt({
+            scale: 1.1
+        });
+
+
+        //Mostrar senha
+        document.querySelectorAll('.verSenha').forEach(checkbox => {
+    checkbox.addEventListener('change', function() {
+        let senhaInputs = this.closest('form').querySelectorAll('.input-senha');
+        senhaInputs.forEach(input => {
+            input.type = this.checked ? 'text' : 'password';
+        });
+    });
+});
+        // Funções para alternar entre formulários
+        function showLogin() {
+            document.getElementById('loginForm').style.display = 'block';
+            document.getElementById('registerForm').style.display = 'none';
+            document.getElementById('forgotPasswordForm').style.display = 'none';
+        }
+
+
+        function showRegister() {
+            document.getElementById('registerForm').style.display = 'block';
+            document.getElementById('loginForm').style.display = 'none';
+            document.getElementById('forgotPasswordForm').style.display = 'none';
+        }
+
+
+        function showForgotPassword() {
+            document.getElementById('forgotPasswordForm').style.display = 'block';
+            document.getElementById('loginForm').style.display = 'none';
+            document.getElementById('registerForm').style.display = 'none';
+        }
+
+
+        // Função para enviar o formulário de login
+        document.getElementById('loginForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+
+
+    const email = document.getElementById('email').value;
+    const senha = document.getElementById('password').value;
+
+
+    fetch('/login', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email, senha }),
+    })
+    .then(response => {
+        if (response.ok) {
+            window.location.href = "perfil.html"; // Redireciona para a página de dashboard
+        } else {
+            alert('Email ou senha incorretos!');
+        }
+    })
+    .catch(error => console.error('Erro:', error));
+});
+
+
+// Função para enviar o formulário de cadastro
+document.getElementById('registerForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+
+
+    const nome = document.getElementById('name').value;
+    const email = document.getElementById('register-email').value;
+    const senha = document.getElementById('register-password').value;
+    const telefone = document.getElementById('register-text').value;
+    const tipo = document.getElementById('tipo').value;
+
+
+    if (!nome || !email || !senha || !telefone || !tipo ) {
+        alert("Por favor, preencha todos os campos.");
+        return;
+    }
+
+
+    console.log('Dados enviados:', { nome, email, senha, telefone });
+
+
+    fetch('/cadastro', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ nome, email, senha, telefone, tipo }),
+    })
+    .then(response => {
+        if (response.ok) {
+            alert('Cadastro realizado com sucesso! Faça login.');
+            showLogin();
+        } else {
+            alert('Erro ao cadastrar: ' + response.statusText);
+        }
+    })
+    .catch(error => console.error('Erro:', error));
+});
+
+        // Função para enviar o formulário de recuperação de senha
+        document.getElementById('forgotPasswordForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+
+
+            const email = document.getElementById('forgot-email').value;
+
+
+            // Simulação de uma requisição de recuperação de senha
+            fetch('/recuperar-senha', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ email }),
+            })
+            .then(response => {
+                if (response.ok) {
+                    alert('Instruções de recuperação enviadas para o seu email.');
+                    showLogin();
+                } else {
+                    alert('Erro ao recuperar senha: ' + response.statusText);
+                }
+            })
+            .catch(error => console.error('Erro:', error));
+        });
+
+
      document.querySelector('.form-box.login form').addEventListener('submit', function(e) {
         e.preventDefault();
-    
+   
         const email = this.querySelector('input[type="email"]').value;
         const senha = this.querySelector('input[type="password"]').value;
-    
+   
         fetch('/login', {
             method: 'POST',
             headers: {
@@ -156,21 +372,22 @@
         })
         .catch(error => console.error('Erro:', error));
      });
-    
+   
      document.querySelector('.form-box.register form').addEventListener('submit', function(e) {
         e.preventDefault();
-    
+   
         const nome = this.querySelector('input[type="text"]').value;
         const email = this.querySelector('input[type="email"]').value;
         const senha = this.querySelector('input[type="password"]').value;
+        const telefone = this.querySelector('input[type="text"]').value;
         const tipo = this.querySelector('select').value;
-    
+   
         fetch('/cadastro', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
             },
-            body: JSON.stringify({ nome, email, senha, tipo }),
+            body: JSON.stringify({ nome, email, senha, telefone, tipo }),
         })
         .then(response => {
             if (response.ok) {
@@ -183,6 +400,7 @@
         .catch(error => console.error('Erro:', error));
      });
     </script>
+
 
 <!--Atualizar senha do usuário no banco/fetch para rota-->
     <script>
@@ -212,7 +430,7 @@
              alert("Senha atualizada com sucesso!");
              window.location.href = 'perfil.html';
          } else {
-             alert(data.message); 
+             alert(data.message);
          }
      })
      .catch(error => {

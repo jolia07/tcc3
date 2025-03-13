@@ -15,50 +15,53 @@ const pool = mysql.createPool({
   queueLimit: 0
 });
 
-pool.query(`
-  CREATE TABLE IF NOT EXISTS materia (
-    id INT AUTO_INCREMENT PRIMARY KEY not null,
-    uc varchar(255) not null,
-    ch int not null
-  );
-`).then(() => {
-  console.log("Tabela 'materia' pronta!");
-}).catch(err => {
-  console.error("Erro ao criar a tabela 'materia':", err);
-});
+async function criarTabelas() {
+  try {
+      await pool.query(`
+          CREATE TABLE IF NOT EXISTS materia (
+              id INT AUTO_INCREMENT PRIMARY KEY NOT NULL,
+              uc varchar(255) not null,
+              ch int not null
+          );
+      `);
+      console.log("Tabela 'materia' pronta!");
 
-pool.query(`
-  CREATE TABLE IF NOT EXISTS usuarios (
-      id INT AUTO_INCREMENT PRIMARY KEY,
-      nome VARCHAR(255) NOT NULL,
-      email VARCHAR(255) UNIQUE NOT NULL,
-      senha VARCHAR(255) NOT NULL,
-      telefone VARCHAR(20) NOT NULL,
-      profilePic VARCHAR(255),
-      tipo ENUM('docente', 'adm', 'aluno') NOT NULL
-  );
-`).then(() => {
-  console.log("Tabela 'usuarios' pronta!");
-}).catch(err => {
-  console.error("Erro ao criar a tabela 'usuarios':", err);
-});
+      await pool.query(`
+          CREATE TABLE IF NOT EXISTS usuarios (
+              id INT AUTO_INCREMENT PRIMARY KEY NOT NULL,
+              nome VARCHAR(255) NOT NULL,
+              email VARCHAR(255) UNIQUE NOT NULL,
+              senha VARCHAR(255) NOT NULL,
+              telefone VARCHAR(20) NOT NULL,
+              profilePic VARCHAR(255),
+              tipo ENUM('docente', 'adm', 'aluno') NOT NULL
+          );
+      `);
+      console.log("Tabela 'usuarios' pronta!");
 
-pool.query(`
-  CREATE TABLE IF NOT EXISTS aula (
-      id INT AUTO_INCREMENT PRIMARY KEY not null,
-      turno varchar(255) not null,
-      laboratorio VARCHAR(255) NOT NULL,
-      turma VARCHAR(255) UNIQUE NOT NULL,
-      dataInicio varchar(255) not null,
-      diasSemana varchar(255) NOT NULL,
-      materia_id int,
-      foreign key (materia_id) references materia(id) on delete cascade
-  );
-`).then(() => {
-  console.log("Tabela 'aula' pronta!");
-}).catch(err => {
-  console.error("Erro ao criar a tabela 'aula':", err);
-});
+      await pool.query(`
+          CREATE TABLE IF NOT EXISTS aula (
+              id INT AUTO_INCREMENT PRIMARY KEY NOT NULL,
+              turno varchar(255) not null,
+              laboratorio VARCHAR(255) NOT NULL,
+              turma VARCHAR(255) UNIQUE NOT NULL,
+              dataInicio varchar(255) not null,
+              diasSemana varchar(255) NOT NULL,
+              materia_id int,
+              foreign key (materia_id) references materia(id) on delete cascade,
+              usuario_id int,
+              foreign key (usuario_id) references usuarios(id) on delete cascade
+          );
+      `);
+      console.log("Tabela 'aula' pronta!");
+
+  } catch (err) {
+      console.error("Erro ao criar tabelas:", err);
+  }
+}
+
+// Chamando a função para criar as tabelas
+criarTabelas();
 
 // Conectar ao banco e criar a tabela
 pool.getConnection()
@@ -66,5 +69,28 @@ pool.getConnection()
     console.log("Conectado ao MySQL no Railway!");
   })
   .catch(err => console.error("Erro na conexão", err));
+
+async function obterAulas() {
+  try {
+      const [rows] = await pool.query(`
+          SELECT 
+                aula.id, 
+                aula.turno, 
+                aula.laboratorio, 
+                aula.turma, 
+                aula.dataInicio, 
+                aula.diasSemana, 
+                materia.uc AS materia, 
+                usuarios.nome AS professor
+            FROM aula
+            JOIN materia ON aula.materia_id = materia.id
+            JOIN usuarios ON aula.usuario_id = usuarios.id;
+      `);
+      return rows;  // Retorna os resultados
+    } catch (err) {
+      console.error("Erro ao buscar aulas:", err);
+      return [];
+    }
+}
 
 module.exports = pool; // Exporta o pool, NÃO fecha a conexão!

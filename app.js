@@ -106,7 +106,7 @@ app.post('/login', async (req, res) => {
     };
 
     console.log('Usuário logado:', req.session.user);
-    res.redirect('perfil');
+    res.json({ message: "Login bem-sucedido!", redirect: "/perfil.html" });
 
   } catch (err) {
     console.error('Erro ao fazer login:', err);
@@ -116,10 +116,10 @@ app.post('/login', async (req, res) => {
 
 // Rota de cadastro
 app.post('/cadastro', async (req, res) => {
-  const { nome, email, senha, tipo } = req.body;
+  const { nome, email, senha, telefone, tipo } = req.body;
 
-  if (!['docente', 'adm'].includes(tipo)) {
-    return res.status(400).json({ message: "Tipo inválido! Use 'docente' ou 'adm'." });
+  if (!['docente', 'adm', 'aula'].includes(tipo)) {
+    return res.status(400).json({ message: "Tipo inválido! Use 'docente', 'adm' ou 'aula'." });
   }
 
   try {
@@ -130,13 +130,13 @@ app.post('/cadastro', async (req, res) => {
 
     const senhaCriptografada = await bcrypt.hash(senha, 10);
     const [result] = await pool.query(
-      'INSERT INTO usuarios (nome, email, senha, tipo) VALUES (?, ?, ?, ?)',
-      [nome, email, senhaCriptografada, tipo]
+      'INSERT INTO usuarios (nome, email, senha, telefone, tipo) VALUES (?, ?, ?, ?, ?)',
+      [nome, email, senhaCriptografada, telefone, tipo]
     );
 
-    req.session.user = { id: result.insertId, email, tipo };
+    req.session.user = { id: result.insertId, email, telefone, tipo };
     console.log('Usuário registrado:', req.session.user);
-    res.redirect('perfil');
+    res.json({ message: "cadastro bem-sucedido!", redirect: "/perfil.html" });
 
   } catch (err) {
     console.error('Erro ao cadastrar usuário:', err);
@@ -167,13 +167,13 @@ app.post('/atualizarSenha', async (req, res) => {
 
 // Rota para atualizar perfil
 app.post('/atualizarPerfil', verificarAutenticacao, async (req, res) => {
-  const { nome, email, senha } = req.body;
+  const { nome, email, senha, telefone } = req.body;
   const userId = req.session.user.id;
 
   try {
     const senhaCriptografada = await bcrypt.hash(senha, 10);
-    await pool.query('UPDATE usuarios SET nome = ?, email = ?, senha = ? WHERE id = ?', 
-      [nome, email, senhaCriptografada, userId]);
+    await pool.query('UPDATE usuarios SET nome = ?, email = ?, senha = ?, telefone =? WHERE id = ?', 
+      [nome, email, senhaCriptografada, telefone, userId]);
 
     res.json({ message: 'Perfil atualizado com sucesso!' });
 
@@ -204,19 +204,40 @@ app.post('/upload-profile-image', verificarAutenticacao, upload.single('profileP
 
 app.use('/uploads', express.static('uploads'));
 
-// Rota protegida - Página inicial
+
+//Redirecionamentos
+// Rota protegida - Página principal
 app.get('/calendario', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'calendario.html'));
 });
 
  // Rota para perfil do usuário
- app.get('/perfil', verificarAutenticacao, (req, res) => {
-    res.sendFile(path.join(__dirname, 'public', 'perfil.html'));
+app.get('/perfil', verificarAutenticacao, verificarTipoUsuario(['aluno', 'professor', 'adm']), (req, res) => {
+  if (req.headers.accept && req.headers.accept.includes('application/json')) {
+      return res.json(req.session.usuario); 
+  }
+  res.sendFile(path.join(__dirname, 'public', 'perfil.html'));
 });
 
+//Rota para a página inicial
 app.get('/home', (req, res) => {
-  res.sendFile(__dirname + '/public/home.html'); // Substitua pelo caminho correto
+  res.sendFile(__dirname + '/public/home.html'); 
 });
+
+
+//Recebendo os usuário ao sistema
+function verificarTipoUsuario(tiposPermitidos) {
+  return (req, res, next) => {
+      if (!req.session || !req.session.usuario) {
+          return res.status(401).json({ erro: "Não autorizado" });
+      }
+      const { tipo } = req.session.usuario;
+      if (!tiposPermitidos.includes(tipo)) {
+          return res.status(403).json({ erro: "Acesso negado" });
+      }
+      next();
+  };
+}
 
 // Rota para buscar dados do usuário
 app.get('/getUserData', verificarAutenticacao, async (req, res) => {
@@ -232,6 +253,8 @@ app.get('/getUserData', verificarAutenticacao, async (req, res) => {
   }
 });
 
+
+//Rotas para calendario.html
 // Rota para cadastrar matéria
 app.post('/materias', async (req, res) => {
   const { uc, ch } = req.body;
@@ -253,8 +276,17 @@ app.post('/aulas', async (req, res) => {
   res.json({ message: "Aula cadastrada!" });
 });
 
+app.get('/mostrarAulas', async (req, res) => {
+  try {
+      const aulas = await obterAulas(); // Chama a função que faz a consulta no banco
+      res.json(aulas); // Retorna os dados em formato JSON
+  } catch (error) {
+      res.status(500).json({ error: "Erro ao obter as aulas." });
+  }
+});
+
 app.get('/exportar-excel', async (req, res) => {
-  const [rows] = await pool.query("SELECT * FROM aula");
+  const [rows] = await pool.query("SELECT a.*, m.uc AS nomeMateria FROM aula a JOIN materia m ON a.materia_id = m.id WHERE a.usuario_id = ?");
 
   const workbook = new excelJS.Workbook();
   const worksheet = workbook.addWorksheet('Aulas');

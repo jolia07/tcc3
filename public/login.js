@@ -4,11 +4,10 @@ const overlay = document.querySelector('.overlay');
 const iconClose = document.querySelector('.icon-close');
 const registerLink = document.querySelector('.register-link');
 const loginLink = document.querySelector('.login-link');
-const updateLink = document.querySelector('.update-link'); 
+const updateLink = document.querySelector('.update-link');
 const senhaInput = document.querySelector(".input-senha");
 const checkbox = document.querySelectorAll(".verSenha");
 const iconBack = document.querySelector('.icon-back');
-
 
 // Abre o popup de login ao clicar no botão de login
 btnLoginPopup.addEventListener('click', () => {
@@ -65,15 +64,5 @@ iconClose.addEventListener('click', () => {
 
 // Voltar para o formulário de login ao clicar na seta de voltar
 iconBack.addEventListener('click', () => {
-    openLoginPopup(); 
-});
-
-//Mostrar senha
-document.querySelectorAll('.verSenha').forEach(checkbox => {
-    checkbox.addEventListener('change', function() {
-        let senhaInputs = this.closest('form').querySelectorAll('.input-senha');
-        senhaInputs.forEach(input => {
-            input.type = this.checked ? 'text' : 'password';
-        });
-    });
+    openLoginPopup();
 });
