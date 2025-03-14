@@ -19,7 +19,7 @@ h2.titulo{
 }
 
 header {
-    background: linear-gradient(90deg, rgb(255, 255, 255) 5%, rgb(205, 235, 255) 30%, rgb(170, 218, 250));
+    background: white;
     padding: 40px 4%;
     display: flex;
     justify-content: space-between;  
