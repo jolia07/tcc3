@@ -6,7 +6,7 @@
     <title>Perfil do Usuário</title>
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap">
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,0,0" />
-    <link rel="stylesheet" href="perfil.css">
+    <link rel="stylesheet" href="css/perfil.css">
 </head>
 <body>
     <header>
@@ -14,6 +14,12 @@
             <h2>Perfil do Usuário</h2>
         </nav>
     </header>
+
+    <div id="popup" class="popup">
+        <h2>Escolha seu tipo de conta</h2>
+        <button onclick="definirTipo('docente')">Docente</button>
+        <button onclick="definirTipo('adm')">Adm</button>
+      </div>
 
     <div class="container">
         <div id="profile">
@@ -135,6 +141,29 @@
                 statusElement.textContent = "";
             }
         });
+
+        document.addEventListener("DOMContentLoaded", () => {
+          fetch("/acessandoUsuario")
+          .then(res => res.json())
+          .then(user => {
+              if (user.authenticated && user.user.tipo === "pendente") {
+                 document.getElementById("popup").style.display = "block";
+              }
+           });
+        });
+
+        function definirTipo(tipo) {
+           fetch("/definirTipo", {
+             method: "POST",
+             headers: { "Content-Type": "application/json" },
+             body: JSON.stringify({ tipo })
+            }).then(res => res.json()).then(data => {
+             if (data.success) {
+               document.getElementById("popup").style.display = "none";
+               location.reload(); // Atualiza a página após definir o tipo
+              }
+             });
+        }
 
         async function changePassword(e) {
             e.preventDefault();
